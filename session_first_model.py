@@ -13,8 +13,7 @@ con = engine.connect()
 session = Session(con)
 session_1 = Session(engine)
 #можно создать сессию как и из соединения, так и передать engine
-print(session)
-print(session_1)
+
 
 class Base(DeclarativeBase):
     """Создаём декларативный класс для объявления ORM моделей"""
@@ -54,6 +53,6 @@ class User(Base):
     role: Mapped[Roles] = mapped_column(SqlEnum(Roles))
     is_active: Mapped[bool] = mapped_column(default=True)
 
-print(Base.metadata.tables)
+
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
