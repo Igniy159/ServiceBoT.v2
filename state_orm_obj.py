@@ -25,4 +25,6 @@ def main():
     print(state)
     session.execute(text("DELETE FROM branches"))
     print(check_branches(),'таблица очищена')
-main()
+
+if __name__ == '__main__':
+    main()

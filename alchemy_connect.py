@@ -20,7 +20,7 @@ url_obj = URL.create(drivername='postgresql+psycopg',
               port=5432,
               database='ticket_service')
 
-engine = create_engine(url_from_engine, pool_size=5, max_overflow=10, pool_pre_ping=True, echo=True)
+engine = create_engine(url_from_engine, pool_size=5, max_overflow=10, pool_pre_ping=True)
 
 async_engine = create_async_engine(url_obj)
 
