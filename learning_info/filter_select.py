@@ -1,6 +1,6 @@
 from session_first_model import session, Branch
 from sqlalchemy import select
-from select_orm import add_branch, del_branches
+from learning_info.select_orm import add_branch, del_branches
 
 
 def orm_operation():
