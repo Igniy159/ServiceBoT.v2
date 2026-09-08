@@ -6,8 +6,7 @@ from sqlalchemy import ForeignKey, TIMESTAMP, Enum as SqlEnum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
 from app.models.base import Base
-from app.enums import State
-
+from app.enums import State, Severity
 
 if TYPE_CHECKING:
     from app.models.model_user import User
@@ -26,7 +25,9 @@ class Ticket(Base):
     state: Mapped[State] = mapped_column(SqlEnum(State))
     file_id: Mapped[int | None] = mapped_column(nullable=True)
     assigned_to_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'), nullable=True)
+    severity: Mapped[Severity] = mapped_column(SqlEnum(Severity))
     creator: Mapped[User] = relationship(back_populates='send_tickets')
     branch: Mapped[Branch] = relationship(back_populates='send_tickets')
     assigned_to: Mapped[User] = relationship(back_populates='assigned_tickets')
     rule: Mapped[Rule] = relationship(back_populates='tickets')
+

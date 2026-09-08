@@ -6,12 +6,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
 from app.models.base import Base
-from app.enums import Role
 if TYPE_CHECKING:
     from app.models.model_ticket import Ticket
     from app.models.model_department import Department
     from app.models.model_branch import Branch
     from app.models.model_alert import Alert
+    from app.models.model_permission import Role
 
 
 class User(Base):
@@ -22,7 +22,8 @@ class User(Base):
     name: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)
     tg_id: Mapped[int] = mapped_column(unique=True, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
-    role: Mapped[Role] =  mapped_column(SqlEnum(Role))
+    role_id: Mapped[int] =  mapped_column(ForeignKey('roles.id'))
+    role: Mapped[Role] = relationship(back_populates='users')
     branch_id: Mapped[int | None] = mapped_column(ForeignKey('branches.id'),nullable=True)
     department_id: Mapped[int | None] = mapped_column(ForeignKey('departments.id'),nullable=True)
     branch: Mapped[Branch | None] = relationship(back_populates='work_users')

@@ -1,11 +1,5 @@
 from enum import Enum
 
-class Role(Enum):
-    OWNER = "OWNER"
-    MANAGER = "MANAGER"
-    SPECIALIST = "SPECIALIST"
-    EMPLOYEE = "EMPLOYEE"
-
 class State(Enum):
     NEW = 'NEW'
     CONFIRMED = 'CONFIRMED'
@@ -26,7 +20,6 @@ class Depart(Enum):
     MARKETING = 'MARKETING'
     SERVICE = 'SERVICE'
     TOP_MANAGEMENT = 'TOP_MANAGEMENT'
-
 
 class KindRule(Enum):
     OBJECT = 'OBJECT'
@@ -58,5 +51,7 @@ class Severity(Enum):
     MINOR_ISSUE = 'MINOR_ISSUE'
     INCIDENT = 'INCIDENT'
     REQUEST = 'REQUEST'
+
+
 
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
