@@ -13,3 +13,4 @@ class SettingApp:
         self.session = Session(self.engine)
 
 setting_app = SettingApp()
+

@@ -1,4 +1,4 @@
-from learning_info.session_first_model import session, Branch
+from _not_use.session_first_model import session, Branch
 from sqlalchemy import inspect, select, text
 
 def check_branches():

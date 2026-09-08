@@ -6,7 +6,7 @@ from sqlalchemy import Enum as SqlEnum, Numeric
 from sqlalchemy import ForeignKey, UUID as SqlUUID, DateTime as SqlDatetime
 from sqlalchemy.dialects.postgresql import JSONB
 
-from learning_info.alchemy_connect import engine
+from _not_use.alchemy_connect import engine
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
 
 con = engine.connect()

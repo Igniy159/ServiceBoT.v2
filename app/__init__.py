@@ -1,2 +1,2 @@
-from app.model_user import User
-from app.model_ticket import Ticket
+from app.models.model_user import User
+from app.models.model_ticket import Ticket
