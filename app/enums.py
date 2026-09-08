@@ -9,17 +9,6 @@ class State(Enum):
     CLOSED = 'CLOSED'
     CANCELLED = 'CANCELLED'
 
-class Depart(Enum):
-    HR = 'HR'
-    SECURITY = 'SECURITY'
-    ACCOUNTANT= 'ACCOUNTANT'
-    ARS = 'ARS'
-    IT = 'IT'
-    INVENTORY = 'INVENTORY'
-    STORE = 'STORE'
-    MARKETING = 'MARKETING'
-    SERVICE = 'SERVICE'
-    TOP_MANAGEMENT = 'TOP_MANAGEMENT'
 
 class KindRule(Enum):
     OBJECT = 'OBJECT'
