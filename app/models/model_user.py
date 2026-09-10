@@ -17,10 +17,16 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = 'users'
     __table_args__ = (CheckConstraint('NOT (branch_id IS NOT NULL AND department_id IS NOT NULL)',
-                                     'not_depart_and_branch_on_user'),)
+                                     'not_depart_and_branch_on_user'),
+                      CheckConstraint('NOT (tg_id IS NULL AND email IS NULL)',
+                                      'not null tg and email from user'))
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement= True)
     name: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)
-    tg_id: Mapped[int] = mapped_column(unique=True, nullable=False)
+    tg_id: Mapped[int] = mapped_column(unique=True, nullable=True)
+
+    email: Mapped[str] = mapped_column(unique=True, nullable=True)
+    password_hash: Mapped[str] = mapped_column(nullable=True)
+
     is_active: Mapped[bool] = mapped_column(default=True)
     role_id: Mapped[int] =  mapped_column(ForeignKey('roles.id'))
     role: Mapped[Role] = relationship(back_populates='users')

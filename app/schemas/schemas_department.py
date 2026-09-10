@@ -8,6 +8,6 @@ class ReceiveDepartment(BaseModel):
     """Command for receive department"""
     is_active: bool | None = True
 
-class DeleteDepartment(BaseModel):
-    """Command for delete department"""
+class DeactivateDepartment(BaseModel):
+    """Command for soft delete department"""
     department_id: int = Field(gt=0)

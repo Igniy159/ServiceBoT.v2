@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class CreateAlert(BaseModel):
     """Command for create alert"""
-    code_alert: int = Field(gt=0)
+    rule_id: int = Field(gt=0)
     branch_id: int | None = Field(default=None, gt=0)
     comment: str | None = Field(default=None,max_length=100)
 

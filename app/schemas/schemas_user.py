@@ -1,12 +1,24 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
-class CreateUser(BaseModel):
-    """Command for create new user"""
+class CreateTgUser(BaseModel):
+    """Command for create new user from TG entry"""
     name: str = Field(max_length=20)
     tg_id: int = Field(gt=0)
     role_id: int = Field(gt=0)
     branch_id: int| None = Field(default=None, gt=0)
     department_id: int | None = Field(default=None, gt=0)
+
+class CreateWebUser(BaseModel):
+    """Command for create new user from WEB entry"""
+    name: str = Field(max_length=20)
+    email: EmailStr = Field(max_length=50)
+    password: str = Field(max_length=50)
+    role_id: int = Field(gt=0)
+    branch_id: int| None = Field(default=None, gt=0)
+    department_id: int | None = Field(default=None, gt=0)
+
+class AddTgId(BaseModel):
+    tg_id: int = Field(gt=0)
 
 class DeactivateUser(BaseModel):
     """Command for soft delete user"""
