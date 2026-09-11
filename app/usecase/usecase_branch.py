@@ -10,6 +10,8 @@ from app.usecase.base_usecase import UseCase
 class BranchUseCase(UseCase):
 
     async def create(self, cmd: CreateBranch)-> Branch:
+        await self.auth.load_role()
+        self.auth.check('branch:create')
         new_branch = Branch(name=cmd.name)
         self.session.add(new_branch)
         await self.session.flush()
@@ -17,6 +19,8 @@ class BranchUseCase(UseCase):
 
 
     async def rename(self, cmd: RenameBranch)->Branch:
+        await self.auth.load_role()
+        self.auth.check('branch:rename')
         result = await self.session.execute(
             Select(Branch).where(Branch.id == cmd.branch_id))
         branch = result.scalar_one_or_none()
@@ -28,6 +32,8 @@ class BranchUseCase(UseCase):
 
 
     async def receive(self, cmd: ReceiveBranch)->list[Branch]:
+        await self.auth.load_role()
+        self.auth.check('branch:receive')
         if cmd.is_active is None:
             stmt = Select(Branch)
         else:
@@ -38,6 +44,8 @@ class BranchUseCase(UseCase):
 
 
     async def deactivate(self, cmd: DeleteBranch):
+        await self.auth.load_role()
+        self.auth.check('branch:deactivate')
         result = await self.session.execute(
             Select(Branch).where(Branch.id == cmd.branch_id)
         )

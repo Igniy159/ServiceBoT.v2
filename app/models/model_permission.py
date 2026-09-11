@@ -20,6 +20,7 @@ class Role(Base):
     need_branch: Mapped[bool]
     need_department: Mapped[bool]
     responsibilities: Mapped[list[ClassRule]] = relationship(secondary='role_responsibility')
+    notifications: Mapped[list[ClassRule]] = relationship(secondary='role_subscribers')
 
     permissions: Mapped[list[Permission]] = relationship(back_populates='roles',
                                                          secondary='role_permissions')
@@ -41,6 +42,12 @@ role_permissions = Table(
 )
 role_responsibility = Table(
     'role_responsibility',
+    Base.metadata,
+    Column('role_id',ForeignKey('roles.id'),primary_key=True),
+    Column('class_rule',Enum(ClassRule),primary_key=True)
+)
+role_subscribers = Table(
+    'role_subscribers',
     Base.metadata,
     Column('role_id',ForeignKey('roles.id'),primary_key=True),
     Column('class_rule',Enum(ClassRule),primary_key=True)

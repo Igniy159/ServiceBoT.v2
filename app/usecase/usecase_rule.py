@@ -7,6 +7,8 @@ from app.enums import KindRule,ClassRule
 
 class RuleUseCase(UseCase):
     async def create(self, cmd: CreateRule)->Rule:
+        await self.auth.load_role()
+        self.auth.check('rule:create')
         need_kind = self._get_kind(cmd)
         new_rule = Rule(kind=need_kind,
                         class_rule=cmd.class_rule,
@@ -35,6 +37,8 @@ class RuleUseCase(UseCase):
         return KindRule.OBJECT
 
     async def delete(self, cmd: DeleteRule):
+        await self.auth.load_role()
+        self.auth.check('rule:delete')
         result = await self.session.execute(Select(Rule).where(Rule.id == cmd.rule_id))
         rule =  result.scalar_one_or_none()
         if not rule:

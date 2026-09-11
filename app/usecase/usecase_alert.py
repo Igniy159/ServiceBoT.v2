@@ -7,12 +7,15 @@ from app.usecase.base_usecase import UseCase
 
 class AlertUseCase(UseCase):
     async def create(self, cmd: CreateAlert)->Alert:
+        await self.auth.load_role()
+        self.auth.check('alert:create')
+        self.auth.restrict_for_branch(cmd)
         stmt = Select(Rule).where(Rule.id == cmd.rule_id)
         result = await self.session.execute(stmt)
         rule = result.scalar_one_or_none()
         if rule is None:
             raise ResourceNotFound
-        branch_id = self._presence_branch(cmd)
+        branch_id = self.auth.resolve_branch(cmd)
         new_alert = Alert(rule_id=cmd.rule_id,
                           branch_id=branch_id,
                           comment=cmd.comment)
@@ -20,28 +23,26 @@ class AlertUseCase(UseCase):
         await self.session.flush()
         return new_alert
 
-    def _presence_branch(self, cmd:CreateAlert)->int:
-        if self.actor.branch_id is not None:
-            return self.actor.branch_id
-
-        if cmd.branch_id is not None:
-            return cmd.branch_id
-
-        raise ProhibitNullBranch
 
     async def receive(self, cmd: ReceiveAlerts)->list[Alert]:
+        await self.auth.load_role()
+        self.auth.check('alert:receive')
+        cmd = self.auth.check_restricts(cmd)
         stmt = Select(Alert)
-        if cmd.alert_id is None:
+        if cmd.alert_id is not None:
             stmt = stmt.where(Alert.id == cmd.alert_id)
-        if cmd.branch_id is None:
+        if cmd.branch_id is not None:
             stmt = stmt.where(Alert.branch_id == cmd.branch_id)
-        if cmd.target_id is None:
+        if cmd.department_id is not None:
             stmt = stmt.join(Alert.rule)
-            stmt = stmt.where(Rule.target_id == cmd.target_id)
+            stmt = stmt.where(Rule.target_id == cmd.department_id)
+        if cmd.class_rule is not None:
+            stmt = stmt.join(Alert.rule)
+            stmt = stmt.where(Rule.class_rule == cmd.class_rule)
 
-        if cmd.limit is None:
+        if cmd.limit is not None:
             stmt = stmt.limit(cmd.limit)
-        if cmd.offset is None:
+        if cmd.offset is not None:
             stmt = stmt.offset(cmd.offset)
 
         result = await self.session.execute(stmt)

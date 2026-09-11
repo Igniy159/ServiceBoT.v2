@@ -11,6 +11,8 @@ from app.models import User, Role
 class UserUseCase(UseCase):
 
     async def create_from_tg(self,cmd: CreateTgUser)->User:
+        await self.auth.load_role()
+        self.auth.check('user:invite')
         await self._role_requirement(cmd.role_id, cmd.branch_id, cmd.department_id)
         new_user = User(name= cmd.name,
                         tg_id=cmd.tg_id,
@@ -22,6 +24,8 @@ class UserUseCase(UseCase):
         return new_user
 
     async def create_from_web(self,cmd:CreateWebUser):
+        await self.auth.load_role()
+        self.auth.check('user:invite')
         await self._role_requirement(cmd.role_id, cmd.branch_id, cmd.department_id)
         # NOT ASYNC FUNC !!!
         salt = bcrypt.gensalt()
@@ -37,6 +41,8 @@ class UserUseCase(UseCase):
         return new_user
 
     async def link_tg(self, cmd: AddTgId):
+        await self.auth.load_role()
+        self.auth.check('user:invite')
         result = await self.session.execute(Select(User).where(User.id == cmd.user_id))
         user = result.scalar_one_or_none()
         if not user:
@@ -46,6 +52,8 @@ class UserUseCase(UseCase):
 
 
     async def rename(self, cmd: RenameUser)->User:
+        await self.auth.load_role()
+        self.auth.check('user:rename')
         result = await self.session.execute(Select(User).where(User.id == cmd.user_id))
         user = result.scalar_one_or_none()
         if not user:
@@ -55,6 +63,8 @@ class UserUseCase(UseCase):
         return user
 
     async def deactivate(self, cmd: DeactivateUser):
+        await self.auth.load_role()
+        self.auth.check('user:deactivate')
         self._prohibit_changing_oneself(cmd.user_id)
         result = await self.session.execute(Select(User).where(User.id == cmd.user_id))
         user = result.scalar_one_or_none()
@@ -65,6 +75,9 @@ class UserUseCase(UseCase):
 
 
     async def change(self, cmd: ChangeUser)-> User:
+        await self.auth.load_role()
+        self.auth.check('user:change')
+        cmd = self.auth.check_restricts(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         result = await self.session.execute(Select(User).where(User.id == cmd.user_id))
 
@@ -80,6 +93,9 @@ class UserUseCase(UseCase):
 
 
     async def receive(self, cmd: ReceiveUser)->list[User]:
+        await self.auth.load_role()
+        self.auth.check('user:receive')
+        cmd = self.auth.check_restricts(cmd)
         stmt = Select(User)
         if cmd.user_id:
             stmt = stmt.where(User.id == cmd.user_id)

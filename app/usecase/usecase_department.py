@@ -10,6 +10,8 @@ from app.usecase.base_usecase import UseCase
 class DepartmentUseCase(UseCase):
 
     async def create(self, cmd: CreateDepartment)-> Department:
+        await self.auth.load_role()
+        self.auth.check('department:create')
         new_depart = Department(name=cmd.name)
         self.session.add(new_depart)
         await self.session.flush()
@@ -17,6 +19,8 @@ class DepartmentUseCase(UseCase):
 
 
     async def receive(self, cmd: ReceiveDepartment)->list[Department]:
+        await self.auth.load_role()
+        self.auth.check('department:receive')
         if cmd.is_active is None:
             stmt = Select(Department)
         else:
@@ -27,6 +31,8 @@ class DepartmentUseCase(UseCase):
 
 
     async def deactivate(self, cmd: DeactivateDepartment):
+        await self.auth.load_role()
+        self.auth.check('department:deactivate')
         result = await self.session.execute(
             Select(Department).where(Department.id == cmd.department_id)
         )

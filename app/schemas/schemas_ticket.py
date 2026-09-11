@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from app.enums import Severity, State
+from app.enums import Severity, State, ClassRule
 from datetime import datetime
 
 class CreateTicket(BaseModel):
@@ -17,12 +17,13 @@ class ChangeStateTicket(BaseModel):
     new_state: State
     comment: str = Field( max_length=100)
 
-class ReceiveTicket(BaseModel):
+class ReceiveTickets(BaseModel):
     """ Command for get ticket with optional filter"""
     ticket_id: int | None = Field(default=None, gt=0)
     branch_id: int | None = Field(default=None, gt=0)
     department_id: int | None = Field(default=None, gt=0)
     creator_id: int | None = Field(default=None, gt=0)
+    class_rule: ClassRule | None = None
     state: State | None = None
 
     created_from: datetime  | None = None

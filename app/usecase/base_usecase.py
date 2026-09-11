@@ -11,3 +11,4 @@ class UseCase:
         self.session = session
         self.actor = actor
         self.auth = Authorize(session, actor)
+

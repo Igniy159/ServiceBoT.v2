@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.enums import ClassRule
+
 
 class CreateAlert(BaseModel):
     """Command for create alert"""
@@ -12,7 +14,8 @@ class ReceiveAlerts(BaseModel):
     alert_id: int | None = Field(default=None,gt=0)
     creator_id: int | None = Field(default=None,gt=0)
     branch_id: int | None = Field(default=None,gt=0)
-    target_id: int | None = Field(default=None,gt=0)
+    department_id: int | None = Field(default=None, gt=0)
+    class_rule: ClassRule | None = None
 
     limit: int = Field(default=50, gt=0, le=100)
     offset: int = Field(default=0, ge=0)
