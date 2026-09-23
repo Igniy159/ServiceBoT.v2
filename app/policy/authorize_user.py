@@ -13,7 +13,7 @@ class Authorize:
         self.session = session
         self.actor = actor
         self.permissions: set[str] | None = None
-        self.responsibilities: list[ClassRule] | None = None
+        self.responsibilities: set[ClassRule] | None = None
 
     async def load_role(self):
         stmt = (select(Role)
@@ -25,7 +25,7 @@ class Authorize:
         result = await self.session.execute(stmt)
         role = result.scalar_one()
         self.permissions = {p.name for p in role.permissions}
-        self.responsibilities = role.responsibilities
+        self.responsibilities = {p for p in role.responsibilities}
 
     def check(self, permission: str):
         permissions = self.permissions

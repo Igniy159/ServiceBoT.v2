@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class CreateDepartment(BaseModel):
     """Command for create department"""
@@ -11,3 +12,7 @@ class ReceiveDepartment(BaseModel):
 class DeactivateDepartment(BaseModel):
     """Command for soft delete department"""
     department_id: int = Field(gt=0)
+
+class DepartmentDTO(BaseModel):
+    name: str = Field(max_length=20)
+    model_config = ConfigDict(from_attributes=True)

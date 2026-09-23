@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-from sqlalchemy import String, ForeignKey, Table, Column, CheckConstraint, Enum
+from sqlalchemy import String, ForeignKey, Table, Column, CheckConstraint, Enum, UniqueConstraint
 
 from app.enums import ClassRule
 from app.models.base import Base
@@ -19,8 +19,8 @@ class Role(Base):
 
     need_branch: Mapped[bool]
     need_department: Mapped[bool]
-    responsibilities: Mapped[list[ClassRule]] = relationship(secondary='role_responsibility')
-    notifications: Mapped[list[ClassRule]] = relationship(secondary='role_subscribers')
+    responsibilities: Mapped[list[Responsibility]] = relationship(back_populates='role')
+    subscriptions: Mapped[list[Subscribe]] = relationship(back_populates='role')
 
     permissions: Mapped[list[Permission]] = relationship(back_populates='roles',
                                                          secondary='role_permissions')
@@ -40,15 +40,21 @@ role_permissions = Table(
     Column("role_id", ForeignKey("roles.id"), primary_key=True),
     Column("permission_id", ForeignKey("permissions.id"), primary_key=True),
 )
-role_responsibility = Table(
-    'role_responsibility',
-    Base.metadata,
-    Column('role_id',ForeignKey('roles.id'),primary_key=True),
-    Column('class_rule',Enum(ClassRule),primary_key=True)
-)
-role_subscribers = Table(
-    'role_subscribers',
-    Base.metadata,
-    Column('role_id',ForeignKey('roles.id'),primary_key=True),
-    Column('class_rule',Enum(ClassRule),primary_key=True)
-)
+
+class Responsibility(Base):
+    __tablename__ = 'responsibilities'
+    __table_args__ = (UniqueConstraint('role_id', 'class_rule'),)
+    id: Mapped[int]= mapped_column(primary_key=True, autoincrement=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'))
+    class_rule: Mapped[ClassRule] = mapped_column(Enum(ClassRule),nullable=False)
+
+    role: Mapped[Role] = relationship(back_populates='responsibilities')
+
+class Subscribe(Base):
+    __tablename__ = 'subscriptions'
+    __table_args__ = (UniqueConstraint('role_id','class_rule'),)
+    id: Mapped[int]= mapped_column(primary_key=True, autoincrement=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey('roles.id'))
+    class_rule: Mapped[ClassRule] = mapped_column(Enum(ClassRule),nullable=False)
+
+    role: Mapped[Role] = relationship(back_populates='subscriptions')

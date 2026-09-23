@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.enums import Severity, State, ClassRule
 from datetime import datetime
 
@@ -31,3 +31,14 @@ class ReceiveTickets(BaseModel):
 
     limit: int = Field(default=50, gt=0, le=100)
     offset: int = Field(default=0, ge=0)
+
+class TicketDTO(BaseModel):
+    rule_name:str = Field(max_length=20)
+    severity: Severity
+    branch_name:str = Field(max_length=20)
+    comment:str = Field(default=None, max_length=100)
+    state:State
+    creator_name:str = Field(max_length=20)
+    department_name:str = Field(max_length=20)
+    created_at:datetime
+    model_config = ConfigDict(from_attributes=True)

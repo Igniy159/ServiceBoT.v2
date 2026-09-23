@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+
 
 class CreateBranch(BaseModel):
     """Command for create branch"""
@@ -13,6 +14,10 @@ class ReceiveBranch(BaseModel):
     """Command for receive branch"""
     is_active: bool | None = True
 
-class DeleteBranch(BaseModel):
+class DeactivateBranch(BaseModel):
     """Command for delete branch"""
     branch_id: int = Field(gt=0)
+
+class BranchDTO(BaseModel):
+    name: str = Field(max_length=20)
+    model_config = ConfigDict(from_attributes=True)

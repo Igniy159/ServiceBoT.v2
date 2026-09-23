@@ -4,10 +4,10 @@ from sqlalchemy import Select
 from sqlalchemy.orm import selectinload
 
 from app.errors import AuthorizeError, ResourceNotFound, ProhibitFSM
-from app.models import Ticket, Rule
-from app.enums import State
+from app.models import Ticket, Rule, Branch, User, Department
+from app.enums import State, Severity
 from app.policy.authorize_user import Authorize
-from app.schemas.schemas_ticket import CreateTicket, ChangeStateTicket, ReceiveTickets
+from app.schemas.schemas_ticket import CreateTicket, ChangeStateTicket, ReceiveTickets, TicketDTO
 from app.usecase.base_usecase import UseCase
 
 class TicketUseCase(UseCase):
@@ -32,6 +32,8 @@ class TicketUseCase(UseCase):
     async def create(self, cmd: CreateTicket):
         await self.auth.load_role()
         state_ticket = self._resolve_state(self.auth)
+        need_permission = self._required_permission(state_ticket)
+        self.auth.check(need_permission)
         await self._check_rule(cmd.rule_id)
         now = datetime.now()
         branch_id = self.auth.resolve_branch(cmd)
@@ -61,13 +63,20 @@ class TicketUseCase(UseCase):
         await self.session.flush()
 
 
-    async def receive(self, cmd: ReceiveTickets)->list[Ticket]:
+    async def receive(self, cmd: ReceiveTickets)->list[TicketDTO]:
         await self.auth.load_role()
         self.auth.check('ticket:receive')
         cmd = self.auth.check_restricts(cmd)
-        stmt = Select(Ticket)
-        if cmd.class_rule or cmd.department_id:
-            stmt = stmt.join(Rule)
+        stmt = Select(
+            Rule.name.label('rule_name'),
+            Ticket.severity,
+            Branch.name,
+            Ticket.comment,
+            Ticket.state,
+            User.name.label('creator_name'),
+            Department.name.label('department_name'),
+            Ticket.created_at
+            ).join(Rule).join(Branch).join(Department).join(User)
         if cmd.ticket_id is not None:
             stmt = stmt.where(Ticket.id == cmd.ticket_id)
         if cmd.branch_id is not None:
@@ -82,14 +91,11 @@ class TicketUseCase(UseCase):
             stmt = stmt.where(Ticket.created_at >= cmd.created_from)
         if cmd.created_to is not None:
             stmt = stmt.where(Ticket.created_at < cmd.created_to)
-
-        if cmd.limit is not None:
-            stmt = stmt.limit(cmd.limit)
-        if cmd.offset is not None:
-            stmt = stmt.offset(cmd.offset)
+        stmt = stmt.limit(cmd.limit)
+        stmt = stmt.offset(cmd.offset)
 
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        return [TicketDTO.model_validate(row.mappings()) for row in result]
 
     def _allowed_transition(self,current_state: State,
                             next_state: State)-> bool:

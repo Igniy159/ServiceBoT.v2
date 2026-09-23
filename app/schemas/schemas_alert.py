@@ -1,5 +1,5 @@
+from datetime import datetime
 from pydantic import BaseModel, Field
-
 from app.enums import ClassRule
 
 
@@ -19,3 +19,14 @@ class ReceiveAlerts(BaseModel):
 
     limit: int = Field(default=50, gt=0, le=100)
     offset: int = Field(default=0, ge=0)
+
+    created_from: datetime  | None = None
+    created_to: datetime | None = None
+
+class AlertDTO(BaseModel):
+    rule_name: str = Field(max_length=20)
+    creator_name: str = Field(max_length=20)
+    branch_name: str = Field(max_length=20)
+    department_name: str = Field(max_length=20)
+    comment: str | None = Field(default=None,max_length=100)
+    created_at: datetime

@@ -1,8 +1,8 @@
 from app.errors import ResourceNotFound
 from app.models import Rule
-from app.schemas.schemas_rule import CreateRule, DeleteRule
+from app.schemas.schemas_rule import CreateRule, DeleteRule, RuleDTO
 from app.usecase.base_usecase import UseCase
-from sqlalchemy import Select
+from sqlalchemy import select
 from app.enums import KindRule,ClassRule
 
 class RuleUseCase(UseCase):
@@ -39,9 +39,16 @@ class RuleUseCase(UseCase):
     async def delete(self, cmd: DeleteRule):
         await self.auth.load_role()
         self.auth.check('rule:delete')
-        result = await self.session.execute(Select(Rule).where(Rule.id == cmd.rule_id))
+        result = await self.session.execute(select(Rule).where(Rule.id == cmd.rule_id))
         rule =  result.scalar_one_or_none()
         if not rule:
             raise ResourceNotFound
         await self.session.delete(rule)
         await self.session.flush()
+
+    async def receive(self)->list[Rule]:
+        await self.auth.load_role()
+        self.auth.check('rule:receive')
+        result = await self.session.execute(select(Rule))
+        rules = list(result.scalars().all())
+        return rules

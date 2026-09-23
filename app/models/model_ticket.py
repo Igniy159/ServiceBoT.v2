@@ -30,4 +30,3 @@ class Ticket(Base):
     branch: Mapped[Branch] = relationship(back_populates='send_tickets')
     assigned_to: Mapped[User] = relationship(back_populates='assigned_tickets')
     rule: Mapped[Rule] = relationship(back_populates='tickets')
-

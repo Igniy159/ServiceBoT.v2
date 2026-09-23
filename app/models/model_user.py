@@ -28,7 +28,7 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(nullable=True)
 
     is_active: Mapped[bool] = mapped_column(default=True)
-    role_id: Mapped[int] =  mapped_column(ForeignKey('roles.id'))
+    role_id: Mapped[int] =  mapped_column(ForeignKey('roles.id'),nullable=True)
     role: Mapped[Role] = relationship(back_populates='users')
     branch_id: Mapped[int | None] = mapped_column(ForeignKey('branches.id'),nullable=True)
     department_id: Mapped[int | None] = mapped_column(ForeignKey('departments.id'),nullable=True)

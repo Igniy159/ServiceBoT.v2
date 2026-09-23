@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
 from app.enums import ClassRule
-from app.models import Permission
 
 
 class CreateRole(BaseModel):
@@ -10,4 +9,9 @@ class CreateRole(BaseModel):
     need_branch: bool
     need_department: bool
     responsibilities: list[ClassRule]
-    permissions: list[Permission]
+    notifications: list[ClassRule]
+    permissions_ids: list[int]
+
+class RoleDTO(BaseModel):
+    id: int = Field(gt=0)
+    name: str = Field(max_length=20)

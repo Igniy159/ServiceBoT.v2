@@ -18,7 +18,7 @@ class Rule(Base):
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     kind: Mapped[KindRule] = mapped_column(SqlEnum(KindRule))
     class_rule: Mapped[ClassRule] = mapped_column(SqlEnum(ClassRule))
-    name: Mapped[str] = mapped_column(VARCHAR(20), unique=True)
+    name: Mapped[str] = mapped_column(VARCHAR(30), unique=True)
     target_id: Mapped[int] = mapped_column(ForeignKey('departments.id'))
     target: Mapped[Department] = relationship(back_populates='rules')
     alerts: Mapped[list[Alert]] = relationship(back_populates='rule')

@@ -2,7 +2,7 @@ from sqlalchemy import Select
 
 from app.errors import ResourceNotFound
 from app.models import Department
-from app.schemas.schemas_department import (CreateDepartment,ReceiveDepartment,
+from app.schemas.schemas_department import (CreateDepartment, ReceiveDepartment,
                                             DeactivateDepartment)
 from app.usecase.base_usecase import UseCase
 
