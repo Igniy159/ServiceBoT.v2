@@ -17,7 +17,7 @@ class RegistrationUseCase:
         password_hash = bcrypt.hashpw(cmd.password.encode(),salt).decode()
         role_id = None
         if not await self.boostrap.has_user_in_db():
-            role_id = await self.boostrap.get_owner_id()
+            role_id = await self.boostrap.get_admin_id()
         new_user = User(name=cmd.name,
                         tg_id=cmd.tg_id,
                         email=cmd.email,

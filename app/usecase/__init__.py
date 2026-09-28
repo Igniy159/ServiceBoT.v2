@@ -6,3 +6,4 @@ from app.usecase.usecase_role import RoleUseCase
 from app.usecase.usecase_rule import RuleUseCase
 from app.usecase.usecase_ticket import TicketUseCase
 from app.usecase.usecase_user import UserUseCase
+from app.usecase.usecase_factory import UseCaseFactory

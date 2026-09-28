@@ -40,6 +40,7 @@ def matrix_role(session:Session):
             permissions['alert:create'],
             permissions['alert:receive'],
             permissions['branch:receive'],
+            permissions['department:receive'],
             permissions['ticket:create'],
             permissions['ticket:confirm'],
             permissions['ticket:accept'],

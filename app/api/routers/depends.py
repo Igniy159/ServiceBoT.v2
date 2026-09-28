@@ -8,12 +8,7 @@ from app.setting_app import setting_app
 
 
 async def get_session()-> AsyncGenerator[AsyncSession,None]:
-    async with setting_app.session_factory() as session:
-        try:
-            yield session
-            yield session.commit()
-        except Exception:
-            yield session.rollback()
+    return setting_app.get_session()
 
 
 async def authenticate(session: AsyncSession = Depends(get_session),

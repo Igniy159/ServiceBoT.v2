@@ -12,7 +12,7 @@ class BoostrapPolicy(Policy):
         result = await self.session.execute(stmt)
         return result.scalar()
 
-    async def get_owner_id(self)->int:
-        stmt = select(Role.id).where(Role.name == 'Владелец')
+    async def get_admin_id(self)->int:
+        stmt = select(Role.id).where(Role.name == 'Админ')
         result = await self.session.execute(stmt)
         return result.scalar()

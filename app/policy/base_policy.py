@@ -38,7 +38,3 @@ class Policy:
                 .limit(1))
         result = await self.session.execute(stmt)
         return [result.scalar_one()]
-
-class TicketLifecycle:
-    def __init__(self):
-        pass

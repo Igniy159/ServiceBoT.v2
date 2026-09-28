@@ -11,5 +11,4 @@ class UseCase:
         self.actor = actor
         self.auth = Authorize(session, actor)
 
-class UseCaseFactory(UseCase):
-    pass
+

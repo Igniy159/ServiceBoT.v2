@@ -41,4 +41,5 @@ class TicketDTO(BaseModel):
     creator_name:str = Field(max_length=20)
     department_name:str = Field(max_length=20)
     created_at:datetime
+    file_id: str | None = None
     model_config = ConfigDict(from_attributes=True)

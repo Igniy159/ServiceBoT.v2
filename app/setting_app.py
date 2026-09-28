@@ -1,8 +1,8 @@
 from os import getenv
+from typing import AsyncGenerator
 
 from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, engine
-
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, engine, AsyncSession
 
 
 class SettingApp:
@@ -15,6 +15,11 @@ class SettingApp:
         self.session_factory = async_sessionmaker(
             self.engine,
             expire_on_commit=False)
+
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        async with self.session_factory() as session:
+            yield session
+            await session.commit()
 
 setting_app = SettingApp()
 

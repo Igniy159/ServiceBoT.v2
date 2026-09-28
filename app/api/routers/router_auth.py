@@ -14,7 +14,7 @@ def get_use_case(session: AsyncSession=Depends(get_session)):
                   tags=['Регистрация'],
                   description="""Публичная регистрация.
 Если в системе ещё нет пользователей, первый зарегистрированный
-пользователь получает роль OWNER. Последующие пользователи
+пользователь получает роль ADMIN с полным доступом к системе. Последующие пользователи
 регистрируются без роли""")
 async def registrate(cmd: Registry,
                      use_case:RegistrationUseCase = Depends(get_use_case))->UserDTO:
