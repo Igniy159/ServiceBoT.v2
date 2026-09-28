@@ -35,6 +35,8 @@ class User(Base):
     branch: Mapped[Branch | None] = relationship(back_populates='work_users')
     department: Mapped[Department | None] = relationship(back_populates='work_users')
 
-    send_tickets: Mapped[list[Ticket]] = relationship(back_populates="user")
-    assigned_tickets: Mapped[list[Ticket]] = relationship(back_populates='assigned_to')
+    send_tickets: Mapped[list[Ticket]] = relationship(foreign_keys='[Ticket.creator_id]',
+                                                      back_populates="creator")
+    assigned_tickets: Mapped[list[Ticket]] = relationship(foreign_keys='[Ticket.assigned_to_id]',
+                                                          back_populates='assigned_to')
     send_alerts: Mapped[list[Alert]] = relationship(back_populates='creator')

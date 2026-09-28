@@ -34,9 +34,16 @@ set_permissions = frozenset([
    'ticket:create',
     'ticket:confirm',
     'ticket:accept',
+    'ticket:resolve',
     'ticket:close',
     'ticket:cancel',
    'ticket:receive',
+    'user:create',
+    'user:rename',
+    'user:deactivate',
+    'user:activate',
+    'user:change',
+    'user:receive',
     'full_access'])
 
 permissions_table = sa.table('permissions',

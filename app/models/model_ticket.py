@@ -26,7 +26,9 @@ class Ticket(Base):
     file_id: Mapped[int | None] = mapped_column(nullable=True)
     assigned_to_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'), nullable=True)
     severity: Mapped[Severity] = mapped_column(SqlEnum(Severity))
-    creator: Mapped[User] = relationship(back_populates='send_tickets')
+    creator: Mapped[User] = relationship(foreign_keys=[creator_id],
+                                         back_populates='send_tickets')
     branch: Mapped[Branch] = relationship(back_populates='send_tickets')
-    assigned_to: Mapped[User] = relationship(back_populates='assigned_tickets')
+    assigned_to: Mapped[User] = relationship(foreign_keys=[assigned_to_id],
+                                             back_populates='assigned_tickets')
     rule: Mapped[Rule] = relationship(back_populates='tickets')

@@ -25,7 +25,7 @@ class TicketUseCase(UseCase):
         State.CONFIRMED: 'ticket:confirm',
         State.IN_PROGRESS: 'ticket:accept',
         State.WAITING_EXTERNAL: 'ticket:accept',
-        State.RESOLVED: 'ticket:accept',
+        State.RESOLVED: 'ticket:resolve',
         State.CLOSED: 'ticket:close',
         State.CANCELLED: 'ticket:cancel'}
 
