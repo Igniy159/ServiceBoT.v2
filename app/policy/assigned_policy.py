@@ -6,7 +6,7 @@ from app.policy.base_policy import Policy
 class AssignmentPolicy(Policy):
 
 
-    async def get_assign_user(self, ticket: Ticket)->list[User]:
+    async def get_assign_user(self, ticket: Ticket)->User|list[User]:
         if ticket.state == State.NEW:
             users = await self.get_branch_manager(ticket)
         else:

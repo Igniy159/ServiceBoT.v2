@@ -12,6 +12,7 @@ class Authorize:
     def __init__(self, session: AsyncSession, actor: User):
         self.session = session
         self.actor = actor
+        self.role: Role | None = None
         self.permissions: set[str] | None = None
         self.responsibilities: set[ClassRule] | None = None
 
@@ -24,8 +25,9 @@ class Authorize:
         )
         result = await self.session.execute(stmt)
         role = result.scalar_one()
+        self.role = role
         self.permissions = {p.name for p in role.permissions}
-        self.responsibilities = {p for p in role.responsibilities}
+        self.responsibilities =  {r.class_rule for r in role.responsibilities}
 
     def check(self, permission: str):
         permissions = self.permissions
@@ -37,13 +39,16 @@ class Authorize:
             raise AuthorizeError(f'User can not use this action {permission}')
 
     def check_restricts(self,cmd):
+        if self.role is None:
+            raise AuthorizeError("Role has not be loaded")
         cmd = self.restrict_for_branch(cmd)
         cmd = self.restrict_for_depart(cmd)
-        self.restrict_for_query(cmd)
+        if isinstance(cmd, (ReceiveAlerts, ReceiveTickets)):
+            cmd = self.restrict_for_query(cmd)
         return cmd
 
     def restrict_for_branch(self, cmd):
-        if self.actor.role.need_branch:
+        if self.role.need_branch:
             if getattr(cmd,'branch_id') is None:
                 setattr(cmd,'branch_id', self.actor.branch_id)
             if getattr(cmd,'branch_id') != self.actor.branch_id:
@@ -51,7 +56,7 @@ class Authorize:
         return cmd
 
     def restrict_for_depart(self, cmd):
-        if self.actor.role.need_department:
+        if self.role.need_department:
             if getattr(cmd,'department_id') is None:
                 setattr(cmd, 'department_id', self.actor.department_id)
             if getattr(cmd,'department_id') != self.actor.department_id:
@@ -60,11 +65,19 @@ class Authorize:
 
     def restrict_for_query(self,
                            cmd: ReceiveAlerts | ReceiveTickets):
-        if self.responsibilities is None:
-            raise AuthorizeError("Responsibilities have not been loaded")
         if getattr(cmd,'class_rule') is not None:
+            if self.responsibilities == {ClassRule.ALL}:
+                return cmd
             if cmd.class_rule not in self.responsibilities:
                 raise AuthorizeError
+        if len(self.responsibilities) > 1:
+            raise AuthorizeError('If responsibilities > 1, you need to explicitly specify it in the filter.')
+        if not self.responsibilities:
+            raise AuthorizeError
+        cmd.class_rule = list(self.responsibilities)[0]
+        return cmd
+
+
 
     def resolve_branch(self, cmd:CreateTicket | CreateAlert)->int:
         if self.actor.branch_id is not None:
