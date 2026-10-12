@@ -41,7 +41,7 @@ async def test_positive_load_role(authorize, role_admin):
     await authorize.load_role()
     assert authorize.role == role_admin
     assert authorize.permissions == {'full_access',}
-    assert {r.class_rule for r in authorize.responsibilities} == {ClassRule.ALL}
+    assert {r for r in authorize.responsibilities} == {ClassRule.ALL}
     authorize.session.execute.assert_awaited_once()
 
 @pytest.mark.asyncio
@@ -83,6 +83,10 @@ def test_restrict_branch(authorize):
     cmd.branch_id = None
     authorize.restrict_for_branch(cmd)
     assert cmd.branch_id == authorize.actor.branch_id == 1
+    authorize.role.need_branch = False
+    cmd.branch_id = 5
+    cmd = authorize.restrict_for_branch(cmd)
+    assert cmd.branch_id == 5
 
 def test_cmd_and_actor_branch_must_be_eq(authorize):
     authorize.role = Mock()
@@ -102,6 +106,10 @@ def test_restrict_department(authorize):
     cmd.department_id = None
     authorize.restrict_for_depart(cmd)
     assert cmd.department_id == authorize.actor.department_id == 1
+    authorize.role.need_department = False
+    cmd.department_id = 5
+    cmd = authorize.restrict_for_depart(cmd)
+    assert cmd.department_id == 5
 
 def test_cmd_and_actor_department_must_be_eq(authorize):
     authorize.role = Mock()
@@ -138,6 +146,10 @@ def test_restrict_for_query(authorize):
     with pytest.raises(AuthorizeError):
         authorize.restrict_for_query(cmd)
 
+    authorize.responsibilities = {ClassRule.PLUMBING}
+    cmd.class_rule = None
+    cmd = authorize.restrict_for_query(cmd)
+    assert cmd.class_rule == ClassRule.PLUMBING
 
 def test_resolve_branch(authorize):
     cmd = Mock()
