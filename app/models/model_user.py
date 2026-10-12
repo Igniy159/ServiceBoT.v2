@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from sqlalchemy import VARCHAR, Enum as SqlEnum, ForeignKey, CheckConstraint
+from sqlalchemy import VARCHAR, Enum as SqlEnum, ForeignKey, CheckConstraint, BIGINT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -21,8 +21,8 @@ class User(Base):
                       CheckConstraint('NOT (tg_id IS NULL AND email IS NULL)',
                                       'not null tg and email from user'))
     id: Mapped[int] = mapped_column(primary_key=True,autoincrement= True)
-    name: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)
-    tg_id: Mapped[int] = mapped_column(unique=True, nullable=True)
+    name: Mapped[str] = mapped_column(VARCHAR(30), nullable=False)
+    tg_id: Mapped[int] = mapped_column(BIGINT(),unique=True, nullable=True)
 
     email: Mapped[str] = mapped_column(unique=True, nullable=True)
     password_hash: Mapped[str] = mapped_column(nullable=True)
