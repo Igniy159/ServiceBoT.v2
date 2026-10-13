@@ -1,12 +1,14 @@
 from datetime import datetime
 
 from sqlalchemy import Select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.errors import AuthorizeError, ResourceNotFound, ProhibitFSM
 from app.models import Ticket, Rule, Branch, User, Department
 from app.enums import State, Severity
 from app.policy.authorize_user import Authorize
+from app.policy.escalation_policy import EscalationPolicy
 from app.schemas.schemas_ticket import CreateTicket, ChangeStateTicket, ReceiveTickets, TicketDTO
 from app.usecase.base_usecase import UseCase
 
@@ -21,22 +23,21 @@ class TicketUseCase(UseCase):
         State.CANCELLED: set()}
 
     _permission_mapper = {
-        State.NEW: 'ticket:create',
-        State.CONFIRMED: 'ticket:confirm',
         State.IN_PROGRESS: 'ticket:accept',
         State.WAITING_EXTERNAL: 'ticket:accept',
         State.RESOLVED: 'ticket:resolve',
         State.CLOSED: 'ticket:close',
         State.CANCELLED: 'ticket:cancel'}
 
+
     async def create(self, cmd: CreateTicket):
         await self.auth.load_role()
-        state_ticket = self._resolve_state(self.auth)
-        need_permission = self._required_permission(state_ticket)
-        self.auth.check(need_permission)
+        await self.auth.check('create:ticket')
+        policy = EscalationPolicy(self.session)
+        branch_id = self.auth.resolve_branch(cmd)
+        state_ticket = policy.resolve_state(branch_id, self.auth.permissions)
         await self._check_rule(cmd.rule_id)
         now = datetime.now()
-        branch_id = self.auth.resolve_branch(cmd)
         new_ticket = Ticket(rule_id=cmd.rule_id,
                         created_at=now,
                         branch_id=branch_id,
@@ -105,13 +106,6 @@ class TicketUseCase(UseCase):
     def _required_permission(self, next_state: State)->str:
         return self._permission_mapper[next_state]
 
-    @staticmethod
-    def _resolve_state(auth:Authorize)->State:
-        if 'ticket:confirm' in auth.permissions:
-            return State.CONFIRMED
-        if 'ticket:create' in auth.permissions:
-            return State.NEW
-        raise AuthorizeError(f'User {auth.actor.name} has not permission create ticket')
 
     async def _check_rule(self,rule_id:int):
         result = await self.session.execute(Select(Rule).where(Rule.id == rule_id))

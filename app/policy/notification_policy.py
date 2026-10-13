@@ -1,40 +1,37 @@
-from sqlalchemy import Select
 from app.enums import State
-from app.models import User, Role, Ticket, Rule, Alert, Subscribe
+from app.models import User, Ticket
 from app.policy.base_policy import Policy
-
 
 class NotificationPolicy(Policy):
     target_mapper = {
         State.NEW: ('manager',),
-        State.CONFIRMED: ('executor','subscriber'),
+        State.CONFIRMED: ('executor',),
         State.IN_PROGRESS: ('manager',),
         State.WAITING_EXTERNAL: ('manager',),
         State.RESOLVED: ('manager',),
-        State.CLOSED: ('executor',),
-        State.CANCELLED: ('executor', 'manager')
+        State.CLOSED: ('assigned',),
+        State.CANCELLED: ('assigned', 'manager')
     }
-    async def _get_subscribers(self, rule: Rule)-> list[User]:
-        stmt = (Select(User)
-                .join(User.role)
-                .join(Role.subscriptions)
-                .join(Subscribe)
-                .where(Subscribe.class_rule == rule.class_rule)
-                .where(User.is_active))
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
 
-    async def get_notification_user(self, ticket: Ticket | Alert)->set[User]:
-        state = State.CONFIRMED
-        rule = ticket.rule
-        users = set()
-        if isinstance(ticket, Ticket):
-            state = ticket.state
-        target = self.target_mapper[state]
+    async def ticket_push_notification_user(self, ticket: Ticket)->list[User]:
+        users = []
+        target = self.target_mapper[ticket.state]
         if 'manager' in target:
-            users.update(await self.get_branch_manager(ticket))
+            manager = await self.get_branch_manager(ticket.branch_id)
+            if not manager:
+                creator = await self.get_user_by_id(ticket.creator_id)
+                users.append(creator)
+            else:
+                users.extend(manager)
         if 'executor' in target:
-            users.update(await self.get_executors(rule))
-        if 'subscriber' in target:
-            users.update(await self._get_subscribers(rule))
+            executors = await self.get_executors(ticket.rule)
+            if not executors:
+                owner = await self.get_owner()
+                users.append(owner)
+            else:
+                users.extend(executors)
+        if 'assigned' in target and ticket.assigned_to_id is not None:
+            assigned_to = await self.get_user_by_id(ticket.assigned_to_id)
+            if assigned_to:
+                users.append(assigned_to)
         return users

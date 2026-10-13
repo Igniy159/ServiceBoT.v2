@@ -1,12 +1,17 @@
-from app.models import Ticket
 from app.enums import State
 from app.policy.base_policy import Policy
 
 
 class EscalationPolicy(Policy):
 
-    async def escalate(self, ticket: Ticket)->Ticket:
-        manager = await self.get_branch_manager(ticket)
+
+    async def resolve_state(self,
+                      branch_id: int,
+                      permissions: set[str])->State:
+        manager = await self.get_branch_manager(branch_id)
         if not manager:
-            ticket.state = State.CONFIRMED
-        return ticket
+            return State.CONFIRMED
+        if 'ticket:confirm' in permissions or 'full_access' in permissions:
+            return State.CONFIRMED
+
+        return State.NEW
