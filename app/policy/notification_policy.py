@@ -1,6 +1,7 @@
 from app.enums import State
-from app.models import User, Ticket
+from app.models import User, Ticket, Rule, Role, Subscribe
 from app.policy.base_policy import Policy
+from sqlalchemy import Select
 
 class NotificationPolicy(Policy):
     target_mapper = {
@@ -35,3 +36,13 @@ class NotificationPolicy(Policy):
             if assigned_to:
                 users.append(assigned_to)
         return users
+
+    async def get_subscribers(self, rule: Rule)-> list[User]:
+        stmt = (Select(User)
+                .join(User.role)
+                .join(Role.subscriptions)
+                .join(Subscribe)
+                .where(Subscribe.class_rule == rule.class_rule)
+                .where(User.is_active))
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())

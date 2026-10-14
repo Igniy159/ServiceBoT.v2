@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
-from app.enums import ClassRule
-from app.models import Role, Ticket, User, Responsibility, Permission, Alert, Rule, Subscribe
+from app.models import Role, User, Responsibility, Rule
 
 
 class Policy:
@@ -37,15 +36,6 @@ class Policy:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_subscribers(self, rule: Rule)-> list[User]:
-        stmt = (Select(User)
-                .join(User.role)
-                .join(Role.subscriptions)
-                .join(Subscribe)
-                .where(Subscribe.class_rule == rule.class_rule)
-                .where(User.is_active))
-        result = await self.session.execute(stmt)
-        return list(result.scalars().all())
 
     async def get_user_by_id(self, user_id: int)->User:
         stmt = (Select(User)

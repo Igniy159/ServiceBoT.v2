@@ -1,14 +1,7 @@
 from unittest.mock import AsyncMock
+import pytest
 
 from app.enums import State
-from app.policy.escalation_policy import EscalationPolicy
-import pytest
-from tests.unit.conftest import manager
-
-
-@pytest.fixture
-def escalation()->EscalationPolicy:
-    return EscalationPolicy(session=AsyncMock())
 
 
 @pytest.mark.asyncio
@@ -18,7 +11,7 @@ async def test_resolve_state_if_manager(escalation, manager):
     assert res == State.NEW
 
 @pytest.mark.asyncio
-async def test_resolve_state_if_not_manager(escalation, manager):
+async def test_resolve_state_if_not_manager(escalation):
     escalation.get_branch_manager = AsyncMock()
     escalation.get_branch_manager.return_value = None
     res = await escalation.resolve_state(1, {'ticket:create',})

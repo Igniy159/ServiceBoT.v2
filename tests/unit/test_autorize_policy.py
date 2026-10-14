@@ -1,36 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, Mock
-
+from unittest.mock import Mock
 from app.enums import ClassRule
 from app.errors import AuthorizeError, ProhibitNullBranch
-from app.models import Role, Permission, Responsibility
-from app.policy.authorize_user import Authorize
-
-@pytest.fixture
-def authorize()-> Authorize:
-    policy = Authorize(session=AsyncMock(),
-                       actor=Mock())
-    return policy
-
-
-@pytest.fixture
-def role_admin():
-    return Role(id=1, name='роль админа',
-                permissions=[Permission(name='full_access')],
-                responsibilities= [Responsibility(role_id=1,class_rule=ClassRule.ALL)])
-
-@pytest.fixture
-def role_employee():
-    return   Role(name='Сотрудник филиала',
-         need_branch=True,
-         need_department=False,
-         permissions=[
-         Permission(name='alert:create'),
-         Permission(name='ticket:create')
-         ],
-        responsibilities = [],
-        subscriptions = []
-    )
 
 
 @pytest.mark.asyncio
@@ -41,7 +12,7 @@ async def test_positive_load_role(authorize, role_admin):
     await authorize.load_role()
     assert authorize.role == role_admin
     assert authorize.permissions == {'full_access',}
-    assert {r for r in authorize.responsibilities} == {ClassRule.ALL}
+    assert set(authorize.responsibilities) == {ClassRule.ALL}
     authorize.session.execute.assert_awaited_once()
 
 @pytest.mark.asyncio
