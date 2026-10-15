@@ -100,11 +100,11 @@ def role_employee():
         subscriptions = []
     )
 
+
 @pytest.fixture
 def notification():
-    return NotificationPolicy(session=AsyncMock())
+    return NotificationPolicy()
 
 @pytest.fixture
 def escalation()->EscalationPolicy:
-    return EscalationPolicy(session=AsyncMock())
-
+    return EscalationPolicy()

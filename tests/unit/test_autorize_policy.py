@@ -125,20 +125,20 @@ def test_restrict_for_query(authorize):
 def test_resolve_branch(authorize):
     cmd = Mock()
     authorize.actor.branch_id = 1
-    branch_id = authorize.resolve_branch(cmd)
+    branch_id = authorize.resolve_branch_id(cmd)
     assert branch_id == 1
 
     authorize.actor.branch_id = None
     cmd.branch_id = 2
-    branch_id = authorize.resolve_branch(cmd)
+    branch_id = authorize.resolve_branch_id(cmd)
     assert branch_id == 2
 
     authorize.actor.branch_id = None
     cmd.branch_id = None
     with pytest.raises(ProhibitNullBranch):
-        authorize.resolve_branch(cmd)
+        authorize.resolve_branch_id(cmd)
 
     authorize.actor.branch_id = 1
     cmd.branch_id = 2
-    branch_id = authorize.resolve_branch(cmd)
+    branch_id = authorize.resolve_branch_id(cmd)
     assert branch_id == 1

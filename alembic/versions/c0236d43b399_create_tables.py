@@ -38,7 +38,7 @@ def upgrade() -> None:
     op.create_table('rules',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('kind', sa.Enum('OBJECT', 'REQUEST', 'ALERT', name='kindrule'), nullable=False),
-    sa.Column('class_rule', sa.Enum('CRITICAL_ALERTS', 'SECURITY_ALERTS', 'HR_ALERTS', 'CASH_ALERTS', 'SERVICE_ALERTS', 'BAR_EQUIPMENT', 'REFRIGERATION', 'ELECTRICAL', 'PLUMBING', 'FURNITURE', 'CLIMATE', 'CONSUMABLE_EQUIPMENT', 'STORE_REQUEST', 'INVENTORY_REQUEST', 'MARKETING_REQUEST', 'SECURITY_REQUEST', 'IT_REQUEST', name='classrule'), nullable=False),
+    sa.Column('class_rule', sa.Enum('CRITICAL_ALERTS', 'SECURITY_ALERTS', 'HR_ALERTS', 'CASH_ALERTS', 'SERVICE_ALERTS', 'BAR_EQUIPMENT', 'REFRIGERATION', 'ELECTRICAL', 'PLUMBING', 'FURNITURE', 'CLIMATE', 'CONSUMABLE_EQUIPMENT', 'STORE_REQUEST', 'INVENTORY_REQUEST', 'MARKETING_REQUEST', 'SECURITY_REQUEST', 'IT_REQUEST', 'ALL', name='classrule'), nullable=False),
     sa.Column('name', sa.VARCHAR(length=20), nullable=False),
     sa.Column('target_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['target_id'], ['departments.id'], ),

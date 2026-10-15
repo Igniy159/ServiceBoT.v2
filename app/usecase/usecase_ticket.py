@@ -34,7 +34,7 @@ class TicketUseCase(UseCase):
         await self.auth.load_role()
         await self.auth.check('create:ticket')
         policy = EscalationPolicy(self.session)
-        branch_id = self.auth.resolve_branch(cmd)
+        branch_id = self.auth.resolve_branch_id(cmd)
         state_ticket = policy.resolve_state(branch_id, self.auth.permissions)
         await self._check_rule(cmd.rule_id)
         now = datetime.now()

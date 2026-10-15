@@ -52,20 +52,30 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+def run_migrations_online(db: str) -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-    connectable = create_engine(setting_app.url_bd)
+    if db.lower() == 'test':
+        print("🚀 Test Database")
+        connectable = create_engine(setting_app.url_test_db)
+    elif db.lower() == 'prod':
+        confirm = input("⚠️ Prod Database! Correct ?: ")
+        if confirm.strip().lower() != 'y':
+            print("❌ Cancelled.")
+            return
+        print("🔥 PROD Database")
+        connectable = create_engine(setting_app.url_db)
+    else:
+        raise ValueError('incorrect value')
 
     with connectable.connect() as connection:
         context.configure(
             connection=connection, target_metadata=target_metadata
         )
-
         with context.begin_transaction():
             context.run_migrations()
 
@@ -73,4 +83,5 @@ def run_migrations_online() -> None:
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online()
+    type_db = input("Please write TEST or PROD for database: ")
+    run_migrations_online(type_db)

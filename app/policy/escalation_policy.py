@@ -1,14 +1,14 @@
 from app.enums import State
-from app.policy.base_policy import Policy
+from app.repository.user_repo import UserRepo
 
 
-class EscalationPolicy(Policy):
+class EscalationPolicy:
 
-
-    async def resolve_state(self,
+    @staticmethod
+    async def resolve_state(repo: UserRepo,
                       branch_id: int,
                       permissions: set[str])->State:
-        manager = await self.get_branch_manager(branch_id)
+        manager = await repo.get_branch_manager(branch_id)
         if not manager:
             return State.CONFIRMED
         if 'ticket:confirm' in permissions or 'full_access' in permissions:

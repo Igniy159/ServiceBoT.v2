@@ -79,7 +79,7 @@ class Authorize:
 
 
 
-    def resolve_branch(self, cmd:CreateTicket | CreateAlert)->int:
+    def resolve_branch_id(self, cmd: CreateTicket | CreateAlert)->int:
         if self.actor.branch_id is not None:
             return self.actor.branch_id
 

@@ -1,18 +1,20 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import User, Role
-from app.policy.base_policy import Policy
 
 
-class BoostrapPolicy(Policy):
+class BoostrapPolicy:
 
-    async def has_user_in_db(self)->bool:
+    @staticmethod
+    async def has_user_in_db(session:AsyncSession)->bool:
         stmt = select(
             select(User.id).exists()
         )
-        result = await self.session.execute(stmt)
+        result = await session.execute(stmt)
         return result.scalar()
 
-    async def get_admin_id(self)->int:
+    @staticmethod
+    async def get_admin_id(session: AsyncSession)->int:
         stmt = select(Role.id).where(Role.name == 'Админ')
-        result = await self.session.execute(stmt)
+        result = await session.execute(stmt)
         return result.scalar()

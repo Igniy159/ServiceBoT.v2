@@ -15,7 +15,7 @@ class AlertUseCase(UseCase):
         rule = result.scalar_one_or_none()
         if rule is None:
             raise ResourceNotFound
-        branch_id = self.auth.resolve_branch(cmd)
+        branch_id = self.auth.resolve_branch_id(cmd)
         new_alert = Alert(rule_id=cmd.rule_id,
                           branch_id=branch_id,
                           comment=cmd.comment)
