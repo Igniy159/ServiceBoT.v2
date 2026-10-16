@@ -1,11 +1,13 @@
 import pytest
 from app.policy.boostrap_policy import BoostrapPolicy
+from tests.conftest import FakeUsers
 
 
 @pytest.mark.asyncio
-async def test_has_user_in_db(session, user_factory, admin):
+async def test_has_user_in_db(session, user_factory):
     policy = BoostrapPolicy
     res = await policy.has_user_in_db(session)
+    admin = [FakeUsers.admin]
     assert res is False
     await user_factory(admin) #write admin in DB
     res = await policy.has_user_in_db(session)

@@ -7,7 +7,7 @@ from app.enums import State
 @pytest.mark.asyncio
 async def test_resolve_state_if_manager(escalation, manager):
     user_repo = AsyncMock()
-    user_repo.get_branch_manager = AsyncMock(return_values = manager)
+    user_repo.get_branch_manager = AsyncMock(return_value = manager)
     res = await escalation.resolve_state(user_repo,1, {'ticket:create',})
     assert res == State.NEW
 

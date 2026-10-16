@@ -39,12 +39,13 @@ class BranchUseCase(UseCase):
         return list(result.scalars().all())
 
 
-    async def deactivate(self, cmd: DeactivateBranch):
+    async def deactivate(self, cmd: DeactivateBranch)->Branch:
         await self.auth.load_role()
         self.auth.check('branch:deactivate')
         branch = await self._get_branch(cmd)
         branch.is_active = False
         await self.session.flush()
+        return branch
 
     async def _get_branch(self,cmd):
         result = await self.session.execute(

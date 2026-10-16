@@ -46,31 +46,7 @@ async def branch_factory(session):
         return branches
     return create_branch
 
-@pytest.fixture
-def admin():
-    return [User(name="ADMIN",
-                 tg_id=159357,
-                 role_id=1)]
-
-
-@pytest.fixture(scope="session", autouse=True)
-def set_event_loop_policy():
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(
-            asyncio.WindowsSelectorEventLoopPolicy())
 
 @pytest.fixture
 def user_repo(session:AsyncSession):
     return UserRepo(session)
-
-@pytest_asyncio.fixture
-async def preset_fake_db(branch_factory, user_factory, fake_users, fake_branches):
-    branches = await branch_factory(fake_branches)
-    fake_users[2].branch_id = branches[0].id
-    fake_users[3].branch_id = branches[1].id
-    fake_users[4].branch_id = branches[0].id
-    fake_users[5].branch_id = branches[3].id
-    fake_users[6].branch_id = branches[1].id
-
-    await user_factory(fake_users)
-    return fake_users, branches
