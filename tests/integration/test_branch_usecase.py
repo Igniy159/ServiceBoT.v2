@@ -1,24 +1,22 @@
 import pytest
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
-
 from app.errors import AuthorizeError, ResourceNotFound
 from app.schemas.schemas_branch import CreateBranch, RenameBranch, ReceiveBranch, DeactivateBranch
 from app.usecase import BranchUseCase
-from tests.conftest import FakeUsers
 
 
 @pytest.mark.asyncio
-async def test_only_admin_create_new_branch(session):
-    actor = FakeUsers.admin
+async def test_only_admin_create_new_branch(session, users):
+    actor = users.admin
     service = BranchUseCase(session,actor)
     cmd = CreateBranch(name="Новый филиал")
     res = await service.create(cmd)
     assert res.name == "Новый филиал"
 
 @pytest.mark.asyncio
-async def test_create_branch_unique_violation(session):
-    actor = FakeUsers.admin
+async def test_create_branch_unique_violation(session,users):
+    actor = users.admin
     service = BranchUseCase(session,actor)
     cmd = CreateBranch(name="Новый филиал")
     await service.create(cmd)
@@ -35,9 +33,8 @@ def test_invalid_cmd():
 
 
 @pytest.mark.asyncio
-async def test_other_role_cannot_create_branch(session,all_users):
-    #delete only admin
-    other_users = all_users[1:]
+async def test_other_role_cannot_create_branch(session,users):
+    other_users = users.not_admin()
     cmd = CreateBranch(name="Новый филиал")
     for actor in other_users:
         service = BranchUseCase(session, actor)
@@ -45,112 +42,116 @@ async def test_other_role_cannot_create_branch(session,all_users):
             await service.create(cmd)
 
 @pytest.mark.asyncio
-async def test_admin_can_rename_branch(session, branch_factory, branches):
-    actor = FakeUsers.admin
+async def test_admin_can_rename_branch(session, users,branch_factory, branches):
+    actor = users.admin
     service = BranchUseCase(session, actor)
-    branch = (await branch_factory(branches))[0]
-    cmd = RenameBranch(branch_id=branch.id, new_name='Новое имя')
+    await branch_factory(branches.all())
+    cmd = RenameBranch(branch_id=branches.dragon.id, new_name='Новое имя')
     res = await service.rename(cmd)
-    assert res.id == branch.id
+    assert res.id == branches.dragon.id
     assert res.name == 'Новое имя'
 
 
 @pytest.mark.asyncio
-async def test_rename_not_found_branch(session, branch_factory, branches):
-    actor = FakeUsers.admin
+async def test_rename_not_found_branch(session, users,branch_factory, branches):
+    actor = users.admin
     service = BranchUseCase(session, actor)
-    await branch_factory(branches)
+    await branch_factory(branches.all())
     cmd = RenameBranch(branch_id=999, new_name='Новое имя')
     with pytest.raises(ResourceNotFound):
         await service.rename(cmd)
 
 
 @pytest.mark.asyncio
-async def test_other_role_cannot_rename_branch(session, all_users, branches,branch_factory):
-    # delete only admin
-    del all_users[0]
-
-    branch = (await branch_factory(branches))[0]
-    old_name = branch.name
-    cmd = RenameBranch(branch_id=branch.id, new_name='Новое имя')
-    for actor in all_users:
+async def test_other_role_cannot_rename_branch(session, users, branches,branch_factory):
+    await branch_factory(branches.all())
+    old_name = branches.dragon.name
+    cmd = RenameBranch(branch_id=branches.dragon.id, new_name='Новое имя')
+    for actor in users.not_admin():
         service = BranchUseCase(session, actor)
         with pytest.raises(AuthorizeError):
             await service.rename(cmd)
 
-    await session.refresh(branch)
-    assert branch.name != "Новое имя"
-    assert branch.name == old_name
+    assert branches.dragon.name != "Новое имя"
+    assert branches.dragon.name == old_name
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('actor', [FakeUsers.admin, FakeUsers.owner])
-async def test_admin_and_owner_can_receive_branches(session, actor, branches,branch_factory):
-    branches = await branch_factory(branches)
-    cmd = ReceiveBranch()
-    service = BranchUseCase(session, actor)
-    res = await service.receive(cmd)
-    assert branches == res
+async def test_admin_and_owner_can_receive_branches(session, users, branches,branch_factory):
+    await branch_factory(branches.all())
+    for actor in (users.admin, users.owner):
+        service = BranchUseCase(session, actor)
+        result = await service.receive(ReceiveBranch())
+        assert {branch.id for branch in result} == {
+            branch.id for branch in branches.all()
+        }
 
-    cmd = ReceiveBranch(is_active=False)
-    res = await service.receive(cmd)
-    assert res == []
+        result = await service.receive(
+            ReceiveBranch(is_active=False)
+        )
+        assert result == []
 
-    branches[0].is_active = False
-    branches = await branch_factory(branches)
-    res = await service.receive(cmd)
-    assert res == [branches[0]]
+        branches.dragon.is_active = False
+        await session.flush()
+        result = await service.receive(
+            ReceiveBranch(is_active=True)
+        )
 
-    cmd = ReceiveBranch(is_active=True)
-    res = await service.receive(cmd)
-    assert branches[0] not in res
-    assert res == branches[1:]
+        assert {branch.id for branch in result} == {
+            branches.boar.id,
+            branches.pony.id,
+            branches.wolf.id,
+        }
+
+        branches.dragon.is_active = True
+        await session.flush()
 
 @pytest.mark.asyncio
-async def test_other_cannot_receive_branches(session,all_users, branches, branch_factory):
-    await branch_factory(branches)
+async def test_other_cannot_receive_branches(session,users, branches, branch_factory):
+    await branch_factory(branches.all())
     cmd = ReceiveBranch()
-    other_users = all_users[2:]
-    for user in other_users:
+    need_users = users.executors()
+    need_users.append(users.manager)
+    need_users.append(users.employee)
+    for user in need_users:
         service = BranchUseCase(session, user)
         with pytest.raises(AuthorizeError):
             await service.receive(cmd)
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize('actor', [FakeUsers.admin])
-async def test_admin_deactivate_branches(session, actor, branches, branch_factory):
-    branches = await branch_factory(branches)
-    branch = branches[0]
+async def test_admin_deactivate_branches(session, users, branches, branch_factory):
+    await branch_factory(branches.all())
+    branch = branches.dragon
     cmd = DeactivateBranch(branch_id=branch.id)
-    service = BranchUseCase(session, actor)
+    service = BranchUseCase(session, users.admin)
     res = await service.deactivate(cmd)
     assert res == branch
     assert res.is_active is False
 
-async def test_double_deactivate_branches(session, branches, branch_factory):
-    branches = await branch_factory(branches)
+@pytest.mark.asyncio
+async def test_double_deactivate_branches(session,users, branches, branch_factory):
+    branches = await branch_factory(branches.all())
     branch = branches[0]
     cmd = DeactivateBranch(branch_id=branch.id)
-    service = BranchUseCase(session, FakeUsers.admin)
+    service = BranchUseCase(session, users.admin)
     res = await service.deactivate(cmd)
     repeat_res = await service.deactivate(cmd)
     assert res == repeat_res
 
 @pytest.mark.asyncio
-async def test_cannot_deactivate_not_found_branch(session, branches, branch_factory):
-    await branch_factory(branches)
-    actor = FakeUsers.admin
+async def test_cannot_deactivate_not_found_branch(session, users,branches, branch_factory):
+    await branch_factory(branches.all())
     cmd = DeactivateBranch(branch_id=999)
-    service = BranchUseCase(session, actor)
+    service = BranchUseCase(session, users.admin)
     with pytest.raises(ResourceNotFound):
         await service.deactivate(cmd)
 
 @pytest.mark.asyncio
-async def test_other_cannot_deactivate_branch(session, all_users, branches, branch_factory):
-    branches =await branch_factory(branches)
+async def test_other_cannot_deactivate_branch(session, users, branches, branch_factory):
+    branches =await branch_factory(branches.all())
     branch = branches[0]
     cmd = DeactivateBranch(branch_id=branch.id)
-    other_users = all_users[1:]
+    other_users = users.not_admin()
     for user in other_users:
         service = BranchUseCase(session, user)
         with pytest.raises(AuthorizeError):

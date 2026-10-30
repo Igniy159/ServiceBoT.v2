@@ -7,7 +7,7 @@ from tests.conftest import FakeUsers
 async def test_has_user_in_db(session, user_factory):
     policy = BoostrapPolicy
     res = await policy.has_user_in_db(session)
-    admin = [FakeUsers.admin]
+    admin = [FakeUsers().admin]
     assert res is False
     await user_factory(admin) #write admin in DB
     res = await policy.has_user_in_db(session)

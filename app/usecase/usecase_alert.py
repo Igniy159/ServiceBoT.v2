@@ -6,7 +6,7 @@ from app.usecase.base_usecase import UseCase
 
 
 class AlertUseCase(UseCase):
-    async def create(self, cmd: CreateAlert)->int:
+    async def create(self, cmd: CreateAlert)->AlertDTO:
         await self.auth.load_role()
         self.auth.check('alert:create')
         self.auth.restrict_for_branch(cmd)
@@ -21,7 +21,12 @@ class AlertUseCase(UseCase):
                           comment=cmd.comment)
         self.session.add(new_alert)
         await self.session.flush()
-        return new_alert.id
+        return AlertDTO(rule_name=new_alert.rule.name,
+                        creator_name=self.auth.actor.name,
+                        branch_name=new_alert.branch.name,
+                        department_name=new_alert.rule.target.name,
+                        comment=new_alert.comment,
+                        created_at=new_alert.created_at)
 
     async def receive(self, cmd: ReceiveAlerts)->list[AlertDTO]:
         await self.auth.load_role()
