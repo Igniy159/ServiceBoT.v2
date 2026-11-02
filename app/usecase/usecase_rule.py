@@ -1,6 +1,6 @@
-from app.errors import ResourceNotFound
-from app.models import Rule
-from app.schemas.schemas_rule import CreateRule, DeleteRule, RuleDTO
+from app.errors import ResourceNotFound, IncorrectFieldsCmd
+from app.models import Rule, Department
+from app.schemas.schemas_rule import CreateRule, DeleteRule
 from app.usecase.base_usecase import UseCase
 from sqlalchemy import select
 from app.enums import KindRule,ClassRule
@@ -10,6 +10,11 @@ class RuleUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('rule:create')
         need_kind = self._get_kind(cmd)
+        stmt = select(Department).where(Department.id == cmd.department_id)
+        res = await self.session.execute(stmt)
+        department = res.scalar_one_or_none()
+        if department is None:
+            raise IncorrectFieldsCmd('Cmd department_id not found')
         new_rule = Rule(kind=need_kind,
                         class_rule=cmd.class_rule,
                         name=cmd.name,
@@ -30,25 +35,34 @@ class RuleUseCase(UseCase):
                        ClassRule.MARKETING_REQUEST,
                        ClassRule.SECURITY_REQUEST,
                        ClassRule.IT_REQUEST])
+        objects = frozenset([ClassRule.BAR_EQUIPMENT,
+                             ClassRule.CLIMATE,
+                             ClassRule.PLUMBING,
+                             ClassRule.FURNITURE,
+                             ClassRule.ELECTRICAL,
+                             ClassRule.CONSUMABLE_EQUIPMENT,
+                             ClassRule.REFRIGERATION])
         if cmd.class_rule in alerts:
             return KindRule.ALERT
         if cmd.class_rule in requests:
             return KindRule.REQUEST
-        return KindRule.OBJECT
+        if cmd.class_rule in objects:
+            return KindRule.OBJECT
+        raise IncorrectFieldsCmd('From rule Class all is prohibit')
 
-    async def delete(self, cmd: DeleteRule):
+    async def deactivate(self, cmd: DeleteRule):
         await self.auth.load_role()
         self.auth.check('rule:delete')
         result = await self.session.execute(select(Rule).where(Rule.id == cmd.rule_id))
-        rule =  result.scalar_one_or_none()
-        if not rule:
-            raise ResourceNotFound
-        await self.session.delete(rule)
+        rule = result.scalar_one_or_none()
+        if rule is None:
+            raise ResourceNotFound('Rule not found')
+        rule.is_active = False
         await self.session.flush()
 
     async def receive(self)->list[Rule]:
         await self.auth.load_role()
         self.auth.check('rule:receive')
-        result = await self.session.execute(select(Rule))
+        result = await self.session.execute(select(Rule).where(Rule.is_active.is_(True)))
         rules = list(result.scalars().all())
         return rules

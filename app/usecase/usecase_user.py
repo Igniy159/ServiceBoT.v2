@@ -1,7 +1,7 @@
 
 from typing import Optional
 from sqlalchemy import Select
-from app.errors import ProhibitSelfModification, IncorrectRoleFields, ResourceNotFound
+from app.errors import ProhibitSelfModification, IncorrectFieldsCmd, ResourceNotFound
 from app.usecase.base_usecase import UseCase
 from app.schemas.schemas_user import (CreateTgUser, DeactivateUser, ChangeUser,
                                       RenameUser, ReceiveUser, AddLinkTg, ActivateUser, UserDTO)
@@ -110,11 +110,11 @@ class UserUseCase(UseCase):
         if not role:
             raise ResourceNotFound
         if branch_id and department_id:
-            raise IncorrectRoleFields
+            raise IncorrectFieldsCmd
         if role.need_branch and not branch_id:
-            raise IncorrectRoleFields
+            raise IncorrectFieldsCmd
         if role.need_department and not department_id:
-            raise IncorrectRoleFields
+            raise IncorrectFieldsCmd
 
     async def _get_user(self, cmd)->User:
         result = await self.session.execute(Select(User).where(User.id == cmd.user_id))

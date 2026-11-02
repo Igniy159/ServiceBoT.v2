@@ -150,7 +150,7 @@ def upgrade() -> None:
                 "kind": group["kind"].value,
                 "class_rule": group["class_rule"].value,
                 "name": rule_name,
-                "target_id": target_id,
+                "target_id": target_id
             })
 
     op.bulk_insert(rule_table, rows)

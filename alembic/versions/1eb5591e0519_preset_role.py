@@ -8,7 +8,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
 from app.enums import ClassRule
@@ -203,7 +203,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     with Session(bind=op.get_bind()) as session:
-        roles = session.scalars(
-            select(Role)
-        ).all()
-        session.delete(roles)
+        roles = session.execute(select(Role)).scalars().all()
+
+        for role in roles:
+            session.delete(role)

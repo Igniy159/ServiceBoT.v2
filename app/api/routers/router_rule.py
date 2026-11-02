@@ -32,5 +32,5 @@ async def create_rule(cmd: CreateRule,
 @rule_rout.delete(path='',tags=['Правила'],description='Удалить правило')
 async def delete_rule(cmd: DeleteRule,
                       use_case: RuleUseCase = Depends(get_rule_use_case)):
-    await use_case.delete(cmd)
+    await use_case.deactivate(cmd)
     return Response(status_code=204)

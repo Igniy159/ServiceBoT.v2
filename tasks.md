@@ -4,7 +4,7 @@
 - [x] use case branch
 - [ ] use case department 
 - [ ] use case registration
-- [ ] use case rule
+- [x] use case rule - 02.11 complete
 - [x] use case role - 02.11 complete
 - [ ] use case ticket
 - [ ] use case user

@@ -4,7 +4,7 @@ class ProhibitSelfModification(Exception):
 class ResourceNotFound(Exception):
     pass
 
-class IncorrectRoleFields(Exception):
+class IncorrectFieldsCmd(Exception):
     pass
 
 class ProhibitNullBranch(Exception):
@@ -14,4 +14,7 @@ class ProhibitFSM(Exception):
     pass
 
 class AuthorizeError(Exception):
+    pass
+
+class RoleAlreadyExists(Exception):
     pass

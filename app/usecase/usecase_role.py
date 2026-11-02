@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.errors import IncorrectRoleFields
+from app.errors import IncorrectFieldsCmd, RoleAlreadyExists
 from app.models import Role, Responsibility, Subscribe, Permission
 from app.schemas.schemas_role import CreateRole, RoleDTO
 from app.usecase.base_usecase import UseCase
@@ -10,7 +10,7 @@ from app.usecase.base_usecase import UseCase
 class RoleUseCase(UseCase):
     async def create(self, cmd:CreateRole)->RoleDTO:
         if cmd.need_branch and cmd.need_department:
-            raise IncorrectRoleFields('Incorrect cmd. Branch and department is true')
+            raise IncorrectFieldsCmd('Incorrect cmd. Branch and department is true')
         await self.auth.load_role()
         self.auth.check('role:create')
 
@@ -23,9 +23,9 @@ class RoleUseCase(UseCase):
         result = await self.session.execute(stmt)
         permissions = list(result.scalars().all())
         if not permissions:
-            raise IncorrectRoleFields('Role must have permissions')
+            raise IncorrectFieldsCmd('Role must have permissions')
         if len(permissions) != len(cmd.permissions):
-            raise IncorrectRoleFields('Cmd permissions have incorrect value')
+            raise IncorrectFieldsCmd('Permissions have incorrect value')
 
         new_role = Role(name=cmd.name,
                             need_branch=cmd.need_branch,
@@ -35,6 +35,9 @@ class RoleUseCase(UseCase):
                             permissions=permissions)
 
         self.session.add(new_role)
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as e:
+            raise RoleAlreadyExists('Role already exists') from e
         return RoleDTO(id=new_role.id,
                        name=new_role.name)

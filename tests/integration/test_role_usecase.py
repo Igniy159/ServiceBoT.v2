@@ -1,9 +1,8 @@
 import pytest
-from sqlalchemy.exc import IntegrityError
 from app.enums import ClassRule
 from app.schemas.schemas_role import CreateRole
 from app.usecase import RoleUseCase
-from app.errors import AuthorizeError, IncorrectRoleFields
+from app.errors import AuthorizeError, IncorrectFieldsCmd, RoleAlreadyExists
 
 
 @pytest.mark.asyncio
@@ -41,7 +40,7 @@ async def test_role_not_have_branch_and_dep(users,session):
                      responsibilities={ClassRule.ALL},
                      subscriptions={ClassRule.ALL},
                      permissions={'full_access'})
-    with pytest.raises(IncorrectRoleFields):
+    with pytest.raises(IncorrectFieldsCmd):
         await use_case.create(cmd)
 
 @pytest.mark.asyncio
@@ -59,9 +58,9 @@ async def test_role_have_only_incorrect_permission(users,session):
                      responsibilities={ClassRule.ALL},
                      subscriptions={ClassRule.ALL},
                      permissions={'full_access','incorrect_value'})
-    with pytest.raises(IncorrectRoleFields):
+    with pytest.raises(IncorrectFieldsCmd):
         await use_case.create(cmd)
-    with pytest.raises(IncorrectRoleFields):
+    with pytest.raises(IncorrectFieldsCmd):
         await use_case.create(cmd1)
 
 @pytest.mark.asyncio
@@ -74,5 +73,5 @@ async def test_role_not_unique_name(users,session):
                      subscriptions={ClassRule.ALL},
                      permissions={'full_access'})
     await use_case.create(cmd)
-    with pytest.raises(IntegrityError):
+    with pytest.raises(RoleAlreadyExists):
         await use_case.create(cmd)
