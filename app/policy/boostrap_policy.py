@@ -7,9 +7,7 @@ class BoostrapPolicy:
 
     @staticmethod
     async def has_user_in_db(session:AsyncSession)->bool:
-        stmt = select(
-            select(User.id).exists()
-        )
+        stmt = select(select(User.id).exists())
         result = await session.execute(stmt)
         return result.scalar()
 

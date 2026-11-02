@@ -3,7 +3,7 @@
 - [ ] use case alert
 - [x] use case branch
 - [x] use case department - 02.11 complete
-- [ ] use case registration
+- [x] use case registration
 - [x] use case rule - 02.11 complete
 - [x] use case role - 02.11 complete
 - [ ] use case ticket
