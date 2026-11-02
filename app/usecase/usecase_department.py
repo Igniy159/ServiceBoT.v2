@@ -1,6 +1,7 @@
 from sqlalchemy import Select
+from sqlalchemy.exc import IntegrityError
 
-from app.errors import ResourceNotFound
+from app.errors import ResourceNotFound, AlreadyExistsError
 from app.models import Department
 from app.schemas.schemas_department import (CreateDepartment, ReceiveDepartment,
                                             DeactivateDepartment)
@@ -14,7 +15,10 @@ class DepartmentUseCase(UseCase):
         self.auth.check('department:create')
         new_depart = Department(name=cmd.name)
         self.session.add(new_depart)
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as e:
+            raise AlreadyExistsError from e
         return new_depart
 
 

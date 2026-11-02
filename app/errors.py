@@ -16,5 +16,6 @@ class ProhibitFSM(Exception):
 class AuthorizeError(Exception):
     pass
 
-class RoleAlreadyExists(Exception):
+class AlreadyExistsError(Exception):
     pass
+

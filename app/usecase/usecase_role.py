@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.errors import IncorrectFieldsCmd, RoleAlreadyExists
+from app.errors import IncorrectFieldsCmd, AlreadyExistsError
 from app.models import Role, Responsibility, Subscribe, Permission
 from app.schemas.schemas_role import CreateRole, RoleDTO
 from app.usecase.base_usecase import UseCase
@@ -38,6 +38,6 @@ class RoleUseCase(UseCase):
         try:
             await self.session.flush()
         except IntegrityError as e:
-            raise RoleAlreadyExists('Role already exists') from e
+            raise AlreadyExistsError('Role already exists') from e
         return RoleDTO(id=new_role.id,
                        name=new_role.name)

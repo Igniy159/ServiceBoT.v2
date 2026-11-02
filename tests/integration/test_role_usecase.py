@@ -2,7 +2,7 @@ import pytest
 from app.enums import ClassRule
 from app.schemas.schemas_role import CreateRole
 from app.usecase import RoleUseCase
-from app.errors import AuthorizeError, IncorrectFieldsCmd, RoleAlreadyExists
+from app.errors import AuthorizeError, IncorrectFieldsCmd, AlreadyExistsError
 
 
 @pytest.mark.asyncio
@@ -73,5 +73,5 @@ async def test_role_not_unique_name(users,session):
                      subscriptions={ClassRule.ALL},
                      permissions={'full_access'})
     await use_case.create(cmd)
-    with pytest.raises(RoleAlreadyExists):
+    with pytest.raises(AlreadyExistsError):
         await use_case.create(cmd)
