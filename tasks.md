@@ -5,9 +5,9 @@
 - [ ] use case department 
 - [ ] use case registration
 - [ ] use case rule
-- [ ] use case role
+- [x] use case role - 02.11 complete
 - [ ] use case ticket
-- [ ] use case rule
+- [ ] use case user
 - [ ] repository user
 
 ## Write API tests first time!
@@ -37,7 +37,7 @@
 - [ ] write docker compose file
 
 ## Readme
-- [ ] write readme file 
+- [ ] write readme file
 
 ## Deploy
 - [ ] I dont know this operations

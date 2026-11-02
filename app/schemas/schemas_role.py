@@ -7,9 +7,9 @@ class CreateRole(BaseModel):
     name: str = Field(max_length=20)
     need_branch: bool
     need_department: bool
-    responsibilities: list[ClassRule]
-    notifications: list[ClassRule]
-    permissions_ids: list[int]
+    responsibilities: set[ClassRule]
+    subscriptions: set[ClassRule]
+    permissions: set[str]
 
 class RoleDTO(BaseModel):
     id: int = Field(gt=0)
