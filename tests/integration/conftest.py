@@ -43,8 +43,3 @@ async def branch_factory(session):
         await session.flush()
         return branches
     return create_branch
-
-
-@pytest.fixture
-def user_repo(session:AsyncSession):
-    return UserRepo(session)

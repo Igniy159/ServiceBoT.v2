@@ -28,9 +28,9 @@ class CreateTgUser(BaseModel):
     branch_id: int| None = Field(default=None, gt=0)
     department_id: int | None = Field(default=None, gt=0)
 
-class AddLinkTg(BaseModel):
-    user_id: int = Field(gt=0)
-    tg_id: int = Field(gt=0)
+# class AddLinkTg(BaseModel):
+#     user_id: int = Field(gt=0)
+#     tg_id: int = Field(gt=0)
 
 class ActivateUser(BaseModel):
     """Command for soft delete user"""

@@ -1,10 +1,11 @@
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
-from typing import Optional
-from sqlalchemy import Select
 from app.errors import ProhibitSelfModification, IncorrectFieldsCmd, ResourceNotFound
+from app.policy.management_policy import ManagementPolicy
 from app.usecase.base_usecase import UseCase
 from app.schemas.schemas_user import (CreateTgUser, DeactivateUser, ChangeUser,
-                                      RenameUser, ReceiveUser, AddLinkTg, ActivateUser, UserDTO)
+                                      RenameUser, ReceiveUser, ActivateUser, UserDTO)
 from app.models import User, Role, Department, Branch
 
 
@@ -13,7 +14,8 @@ class UserUseCase(UseCase):
     async def create_from_tg(self,cmd: CreateTgUser)->User:
         await self.auth.load_role()
         self.auth.check('user:create')
-        await self._role_requirement(cmd.role_id, cmd.branch_id, cmd.department_id)
+        role_user = await self._role_requirement(cmd.role_id, cmd.branch_id, cmd.department_id)
+        ManagementPolicy.check_management(self.auth.role, role_user)
         new_user = User(name= cmd.name,
                         tg_id=cmd.tg_id,
                         role_id=cmd.role_id,
@@ -23,17 +25,18 @@ class UserUseCase(UseCase):
         await self.session.flush()
         return new_user
 
-    async def change_tg_id(self, cmd:AddLinkTg):
-        await self.auth.load_role()
-        self.auth.check('user:tg_link')
-        user = await self._get_user(cmd)
-        user.tg_id = cmd.tg_id
-        await self.session.flush()
+    # async def change_tg_id(self, cmd:AddLinkTg):
+    #     await self.auth.load_role()
+    #     self.auth.check('user:tg_link')
+    #     user = await self._get_user(cmd)
+    #     user.tg_id = cmd.tg_id
+    #     await self.session.flush()
 
     async def rename(self, cmd: RenameUser)->User:
         await self.auth.load_role()
         self.auth.check('user:rename')
         user = await self._get_user(cmd)
+        ManagementPolicy.check_management(self.auth.role, user.role)
         user.name = cmd.new_name
         await self.session.flush()
         return user
@@ -43,6 +46,7 @@ class UserUseCase(UseCase):
         self.auth.check('user:deactivate')
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
+        ManagementPolicy.check_management(self.auth.role, user.role)
         user.is_active = False
         await self.session.flush()
 
@@ -51,6 +55,7 @@ class UserUseCase(UseCase):
         self.auth.check('user:activate')
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
+        ManagementPolicy.check_management(self.auth.role, user.role)
         user.is_active = True
         await self.session.flush()
 
@@ -61,6 +66,7 @@ class UserUseCase(UseCase):
         cmd = self.auth.check_restricts(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
+        ManagementPolicy.check_management(self.auth.role, user.role)
         await self._role_requirement(cmd.role_id,cmd.branch_id,cmd.department_id)
         user.role_id = cmd.role_id
         user.department_id = cmd.department_id
@@ -73,7 +79,7 @@ class UserUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('user:receive')
         cmd = self.auth.check_restricts(cmd)
-        stmt = Select(User.name,
+        stmt = select(User.name,
                       Role.name,
                       Department.name,
                       Branch.name,
@@ -92,7 +98,7 @@ class UserUseCase(UseCase):
             stmt = stmt.where(User.role_id == cmd.role_id)
         if cmd.is_active is not None:
             stmt = stmt.where(User.is_active == cmd.is_active)
-        stmt = stmt.limit(cmd.limit).offset(cmd.offset)
+        stmt = stmt.limit(cmd.limit).offset(cmd.offset).order_by(User.name)
 
         result = await self.session.execute(stmt)
         return [UserDTO.model_validate(row.mappings()) for row in result]
@@ -103,9 +109,9 @@ class UserUseCase(UseCase):
 
     async def _role_requirement(self,
                           role_id: int,
-                          branch_id: Optional[int],
-                          department_id: Optional[int]):
-        role_res = await self.session.execute(Select(Role).where(Role.id == role_id))
+                          branch_id: int | None,
+                          department_id: int | None)->Role:
+        role_res = await self.session.execute(select(Role).where(Role.id == role_id))
         role = role_res.scalar_one_or_none()
         if not role:
             raise ResourceNotFound
@@ -115,10 +121,14 @@ class UserUseCase(UseCase):
             raise IncorrectFieldsCmd
         if role.need_department and not department_id:
             raise IncorrectFieldsCmd
+        return role
 
     async def _get_user(self, cmd)->User:
-        result = await self.session.execute(Select(User).where(User.id == cmd.user_id))
+        stmt = (select(User)
+                .where(User.id == cmd.user_id and User.is_active is True)
+                .options(joinedload(User.role)))
+        result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
-        if not user:
+        if user is None:
             raise ResourceNotFound
         return user
