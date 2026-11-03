@@ -3,7 +3,7 @@ from starlette.responses import Response
 
 from app.api.routers.depends import get_session, authenticate
 from fastapi import Depends, APIRouter, HTTPException
-from app.schemas.schemas_user import (CreateTgUser, ReceiveUser,
+from app.schemas.schemas_user import (CreateUser, ReceiveUser,
                                       AddLinkTg, ChangeUser,
                                       ActivateUser, DeactivateUser, UserDTO)
 from app.models import User
@@ -19,10 +19,10 @@ def get_user_use_case(session: AsyncSession = Depends(get_session),
                 tags=['Пользователи'],
                 description='Добавить пользователя для TG интерфейса',
                 response_model=UserDTO)
-async def create_user(cmd: CreateTgUser,
-                use_case: UserUseCase = Depends(get_user_use_case)
-                )->UserDTO:
-    new_user = await use_case.create_from_tg(cmd)
+async def create_user(cmd: CreateUser,
+                      use_case: UserUseCase = Depends(get_user_use_case)
+                      )->UserDTO:
+    new_user = await use_case.create(cmd)
     return UserDTO(name=new_user.name,
                    tg_id=new_user.tg_id)
 

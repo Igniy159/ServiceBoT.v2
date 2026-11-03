@@ -10,7 +10,7 @@ class AlertUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('alert:create')
         self.auth.restrict_for_branch(cmd)
-        stmt = select(Rule).where(Rule.id == cmd.rule_id)
+        stmt = select(Rule).where(Rule.id == cmd.rule_id and Rule.is_active is True)
         result = await self.session.execute(stmt)
         rule = result.scalar_one_or_none()
         if rule is None:

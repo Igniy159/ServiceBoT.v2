@@ -20,7 +20,7 @@ class LoginData(BaseModel):
     password: str = Field(max_length=50)
 
 
-class CreateTgUser(BaseModel):
+class CreateUser(BaseModel):
     """Command for create new user from TG entry"""
     name: str = Field(max_length=20)
     tg_id: int = Field(gt=0)

@@ -9,6 +9,8 @@ class ManagementPolicy:
             desired_role:Role):
         if actor_role.name == 'Владелец' and desired_role.name == 'Владелец':
             raise AuthorizeError
+        if actor_role.name == 'Владелец' and desired_role.name == 'Админ':
+            raise AuthorizeError
         if actor_role.name == 'Админ' and desired_role.name == 'Админ':
             raise AuthorizeError
         if actor_role.name == 'Управляющий филиала' and desired_role.name != 'Сотрудник филиала':

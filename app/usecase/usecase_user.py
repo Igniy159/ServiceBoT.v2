@@ -4,17 +4,17 @@ from sqlalchemy.orm import joinedload
 from app.errors import ProhibitSelfModification, IncorrectFieldsCmd, ResourceNotFound
 from app.policy.management_policy import ManagementPolicy
 from app.usecase.base_usecase import UseCase
-from app.schemas.schemas_user import (CreateTgUser, DeactivateUser, ChangeUser,
+from app.schemas.schemas_user import (CreateUser, DeactivateUser, ChangeUser,
                                       RenameUser, ReceiveUser, ActivateUser, UserDTO)
 from app.models import User, Role, Department, Branch
 
 
 class UserUseCase(UseCase):
 
-    async def create_from_tg(self,cmd: CreateTgUser)->User:
+    async def create(self, cmd: CreateUser)->User:
         await self.auth.load_role()
         self.auth.check('user:create')
-        role_user = await self._role_requirement(cmd.role_id, cmd.branch_id, cmd.department_id)
+        role_user = await self.check_role_requirement(cmd)
         ManagementPolicy.check_management(self.auth.role, role_user)
         new_user = User(name= cmd.name,
                         tg_id=cmd.tg_id,
@@ -67,7 +67,7 @@ class UserUseCase(UseCase):
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
         ManagementPolicy.check_management(self.auth.role, user.role)
-        await self._role_requirement(cmd.role_id,cmd.branch_id,cmd.department_id)
+        await self.check_role_requirement(cmd)
         user.role_id = cmd.role_id
         user.department_id = cmd.department_id
         user.branch_id = cmd.branch_id
@@ -107,28 +107,46 @@ class UserUseCase(UseCase):
         if self.actor.id == user_id:
             raise ProhibitSelfModification
 
-    async def _role_requirement(self,
-                          role_id: int,
-                          branch_id: int | None,
-                          department_id: int | None)->Role:
-        role_res = await self.session.execute(select(Role).where(Role.id == role_id))
-        role = role_res.scalar_one_or_none()
-        if not role:
-            raise ResourceNotFound
-        if branch_id and department_id:
+
+    async def check_role_requirement(self, cmd: CreateUser | ChangeUser)-> Role:
+        if cmd.branch_id and cmd.department_id:
             raise IncorrectFieldsCmd
-        if role.need_branch and not branch_id:
+
+        result = await self.session.execute(select(Role).where(Role.id == cmd.role_id))
+        role = result.scalar_one_or_none()
+        if role is None:
+            raise ResourceNotFound('Role not found')
+
+        if cmd.branch_id:
+            result = await self.session.execute(
+                select(Branch).where(Branch.id == cmd.branch_id,
+                                     Branch.is_active.is_(True)))
+            branch = result.scalar_one_or_none()
+            if branch is None:
+                raise ResourceNotFound('Branch not found')
+
+        if cmd.department_id:
+            result = await self.session.execute(
+                select(Department)
+                .where(Department.id == cmd.department_id,
+                       Department.is_active.is_(True)))
+            department = result.scalar_one_or_none()
+            if department is None:
+                raise ResourceNotFound('Department not found')
+
+        if role.need_branch and not cmd.branch_id:
             raise IncorrectFieldsCmd
-        if role.need_department and not department_id:
+        if role.need_department and not cmd.department_id:
             raise IncorrectFieldsCmd
+
         return role
 
     async def _get_user(self, cmd)->User:
         stmt = (select(User)
-                .where(User.id == cmd.user_id and User.is_active is True)
+                .where(User.id == cmd.user_id, User.is_active.is_(True))
                 .options(joinedload(User.role)))
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
         if user is None:
-            raise ResourceNotFound
+            raise ResourceNotFound('User not found')
         return user
