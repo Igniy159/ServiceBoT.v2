@@ -35,6 +35,7 @@ class UserUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('user:rename')
         user = await self._get_user(cmd)
+        await self.auth.check_branch_access(user.branch_id)
         ManagementPolicy.check_management(self.auth.role, user.role)
         user.name = cmd.new_name
         await self.session.flush()
@@ -150,3 +151,4 @@ class UserUseCase(UseCase):
         if user is None:
             raise ResourceNotFound('User not found')
         return user
+

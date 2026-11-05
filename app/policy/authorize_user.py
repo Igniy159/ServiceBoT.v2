@@ -77,6 +77,13 @@ class Authorize:
         cmd.class_rule = list(self.responsibilities)[0]
         return cmd
 
+    def check_branch_access(self, branch_id: int | None) -> None:
+        if self.role is None:
+            raise AuthorizeError("Role has not been loaded")
+
+        if self.role.need_branch:
+            if branch_id != self.actor.branch_id:
+                raise AuthorizeError
 
 
     def resolve_branch_id(self, cmd: CreateTicket | CreateAlert)->int:
