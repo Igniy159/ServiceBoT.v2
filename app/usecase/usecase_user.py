@@ -67,7 +67,6 @@ class UserUseCase(UseCase):
     async def change(self, cmd: ChangeUser)-> User:
         await self.auth.load_role()
         self.auth.check('user:change')
-        cmd = self.auth.restrict_for_branch(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
         ManagementPolicy.check_management(self.auth.role, user.role)
