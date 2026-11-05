@@ -35,27 +35,29 @@ class UserUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('user:rename')
         user = await self._get_user(cmd)
-        await self.auth.check_branch_access(user.branch_id)
+        self.auth.check_branch_access(user.branch_id)
         ManagementPolicy.check_management(self.auth.role, user.role)
         user.name = cmd.new_name
         await self.session.flush()
         return user
 
-    async def deactivate(self, cmd: DeactivateUser):
+    async def deactivate(self, cmd: DeactivateUser)->User:
         await self.auth.load_role()
         self.auth.check('user:deactivate')
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
+        self.auth.check_branch_access(user.branch_id)
         ManagementPolicy.check_management(self.auth.role, user.role)
         user.is_active = False
         await self.session.flush()
+        return user
 
     async def activate(self, cmd: ActivateUser):
         await self.auth.load_role()
         self.auth.check('user:activate')
-        cmd = self.auth.restrict_for_branch(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
+        self.auth.check_branch_access(user.branch_id)
         ManagementPolicy.check_management(self.auth.role, user.role)
         user.is_active = True
         await self.session.flush()
