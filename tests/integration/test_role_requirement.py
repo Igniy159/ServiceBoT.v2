@@ -12,7 +12,7 @@ async def test_incorrect_role_id(session,users):
                      tg_id=987,
                      role_id=999)
     with pytest.raises(ResourceNotFound):
-        await use_case.check_role_requirement(cmd)
+        await use_case.validate_role_assignment(cmd)
 
 @pytest.mark.asyncio
 async def test_incorrect_branch_id(session,users):
@@ -22,7 +22,7 @@ async def test_incorrect_branch_id(session,users):
                      role_id=1,
                      branch_id=999)
     with pytest.raises(ResourceNotFound):
-        await use_case.check_role_requirement(cmd)
+        await use_case.validate_role_assignment(cmd)
 
 @pytest.mark.asyncio
 async def test_incorrect_depart_id(session,users):
@@ -32,7 +32,7 @@ async def test_incorrect_depart_id(session,users):
                      role_id=1,
                      department_id=999)
     with pytest.raises(ResourceNotFound):
-        await use_case.check_role_requirement(cmd)
+        await use_case.validate_role_assignment(cmd)
 
 @pytest.mark.asyncio
 async def test_role_have_branch_and_depart(session,users):
@@ -43,5 +43,5 @@ async def test_role_have_branch_and_depart(session,users):
                      department_id=1,
                      branch_id=1)
     with pytest.raises(IncorrectFieldsCmd):
-        await use_case.check_role_requirement(cmd)
+        await use_case.validate_role_assignment(cmd)
 

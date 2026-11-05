@@ -1,5 +1,5 @@
 from app.errors import AuthorizeError
-from app.models import Role
+from app.models import Role, User
 
 
 class ManagementPolicy:

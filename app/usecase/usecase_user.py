@@ -1,7 +1,8 @@
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload
 
-from app.errors import ProhibitSelfModification, IncorrectFieldsCmd, ResourceNotFound
+from app.errors import ProhibitSelfModification, IncorrectFieldsCmd, ResourceNotFound, AlreadyExistsError
 from app.policy.management_policy import ManagementPolicy
 from app.usecase.base_usecase import UseCase
 from app.schemas.schemas_user import (CreateUser, DeactivateUser, ChangeUser,
@@ -14,7 +15,8 @@ class UserUseCase(UseCase):
     async def create(self, cmd: CreateUser)->User:
         await self.auth.load_role()
         self.auth.check('user:create')
-        role_user = await self.check_role_requirement(cmd)
+        cmd = self.auth.restrict_for_branch(cmd)
+        role_user = await self.validate_role_assignment(cmd)
         ManagementPolicy.check_management(self.auth.role, role_user)
         new_user = User(name= cmd.name,
                         tg_id=cmd.tg_id,
@@ -22,15 +24,12 @@ class UserUseCase(UseCase):
                         department_id=cmd.department_id,
                         branch_id=cmd.branch_id)
         self.session.add(new_user)
-        await self.session.flush()
+        try:
+            await self.session.flush()
+        except IntegrityError as e:
+            raise AlreadyExistsError from e
         return new_user
 
-    # async def change_tg_id(self, cmd:AddLinkTg):
-    #     await self.auth.load_role()
-    #     self.auth.check('user:tg_link')
-    #     user = await self._get_user(cmd)
-    #     user.tg_id = cmd.tg_id
-    #     await self.session.flush()
 
     async def rename(self, cmd: RenameUser)->User:
         await self.auth.load_role()
@@ -53,6 +52,7 @@ class UserUseCase(UseCase):
     async def activate(self, cmd: ActivateUser):
         await self.auth.load_role()
         self.auth.check('user:activate')
+        cmd = self.auth.restrict_for_branch(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
         ManagementPolicy.check_management(self.auth.role, user.role)
@@ -63,11 +63,11 @@ class UserUseCase(UseCase):
     async def change(self, cmd: ChangeUser)-> User:
         await self.auth.load_role()
         self.auth.check('user:change')
-        cmd = self.auth.check_restricts(cmd)
+        cmd = self.auth.restrict_for_branch(cmd)
         self._prohibit_changing_oneself(cmd.user_id)
         user = await self._get_user(cmd)
         ManagementPolicy.check_management(self.auth.role, user.role)
-        await self.check_role_requirement(cmd)
+        await self.validate_role_assignment(cmd)
         user.role_id = cmd.role_id
         user.department_id = cmd.department_id
         user.branch_id = cmd.branch_id
@@ -78,7 +78,7 @@ class UserUseCase(UseCase):
     async def receive(self, cmd: ReceiveUser)->list[UserDTO]:
         await self.auth.load_role()
         self.auth.check('user:receive')
-        cmd = self.auth.check_restricts(cmd)
+        cmd = self.auth.restrict_for_branch(cmd)
         stmt = select(User.name,
                       Role.name,
                       Department.name,
@@ -108,7 +108,7 @@ class UserUseCase(UseCase):
             raise ProhibitSelfModification
 
 
-    async def check_role_requirement(self, cmd: CreateUser | ChangeUser)-> Role:
+    async def validate_role_assignment(self, cmd: CreateUser | ChangeUser)-> Role:
         if cmd.branch_id and cmd.department_id:
             raise IncorrectFieldsCmd
 

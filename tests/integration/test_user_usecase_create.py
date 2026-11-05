@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy import select
-from app.errors import AuthorizeError
+from app.errors import AuthorizeError, AlreadyExistsError
 from app.models import User, Role
 from app.schemas.schemas_user import CreateUser
 from app.usecase.usecase_user import UserUseCase
@@ -59,4 +59,28 @@ async def test_manager_create_employee(session, users, branches, branch_factory,
         select(Role.name).join(User.role).where(User.name == 'Василий Игнатович'))
     user_role = res.scalars().one()
     assert user_role == 'Сотрудник филиала'
+
+@pytest.mark.asyncio
+async def test_double_create_new_user(session,users):
+    cmd = CreateUser(name='Новый владелец',
+                     tg_id=159,
+                     role_id=2)
+    use_case = UserUseCase(session,users.admin)
+    await use_case.create(cmd)
+    with pytest.raises(AlreadyExistsError):
+        await use_case.create(cmd)
+
+@pytest.mark.asyncio
+async def test_manager_can_not_create_other_branch_user(
+        session,users,branches, branch_factory, user_factory):
+    await branch_factory([branches.dragon, branches.wolf])
+    await user_factory([users.manager])
+    users.manager.branch = branches.dragon
+    cmd = CreateUser(name='Василий Игнатович',
+                     tg_id=456,
+                     role_id=4,
+                     branch_id=branches.wolf.id)
+    use_case = UserUseCase(session, users.manager)
+    with pytest.raises(AuthorizeError):
+        await use_case.create(cmd)
 
