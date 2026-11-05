@@ -1,6 +1,6 @@
 import pytest
 
-from app.errors import AuthorizeError, ResourceNotFound
+from app.errors import AuthorizeError, ResourceNotFound, ProhibitSelfModification
 from app.schemas.schemas_user import DeactivateUser
 from app.usecase import UserUseCase
 
@@ -53,10 +53,9 @@ async def test_double_deactivate_user(session,users, user_factory):
     res = await user_factory([users.hr])
     user_hr = res[0]
     cmd = DeactivateUser(user_id=user_hr.id)
+    await use_case.deactivate(cmd)
     deleted_user = await use_case.deactivate(cmd)
     assert deleted_user.is_active is False
-    with pytest.raises(ResourceNotFound):
-        await use_case.deactivate(cmd)
 
 
 @pytest.mark.asyncio
@@ -72,8 +71,17 @@ async def test_manager_can_not_del_other_branch_user(
         await use_case.deactivate(cmd)
 
 @pytest.mark.asyncio
-async def test_user_not_found(session,users):
+async def test_deactivate_user_not_found(session,users):
     use_case = UserUseCase(session,users.admin)
     cmd = DeactivateUser(user_id=999)
     with pytest.raises(ResourceNotFound):
+        await use_case.deactivate(cmd)
+
+
+@pytest.mark.asyncio
+async def test_self_deactivate(session,users, user_factory):
+    await user_factory([users.admin])
+    use_case = UserUseCase(session, users.admin)
+    cmd = DeactivateUser(user_id=users.admin.id)
+    with pytest.raises(ProhibitSelfModification):
         await use_case.deactivate(cmd)

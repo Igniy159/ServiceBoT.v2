@@ -52,7 +52,7 @@ class UserUseCase(UseCase):
         await self.session.flush()
         return user
 
-    async def activate(self, cmd: ActivateUser):
+    async def activate(self, cmd: ActivateUser)->User:
         await self.auth.load_role()
         self.auth.check('user:activate')
         self._prohibit_changing_oneself(cmd.user_id)
@@ -61,6 +61,7 @@ class UserUseCase(UseCase):
         ManagementPolicy.check_management(self.auth.role, user.role)
         user.is_active = True
         await self.session.flush()
+        return user
 
 
     async def change(self, cmd: ChangeUser)-> User:
@@ -146,7 +147,7 @@ class UserUseCase(UseCase):
 
     async def _get_user(self, cmd)->User:
         stmt = (select(User)
-                .where(User.id == cmd.user_id, User.is_active.is_(True))
+                .where(User.id == cmd.user_id)
                 .options(joinedload(User.role)))
         result = await self.session.execute(stmt)
         user = result.scalar_one_or_none()
