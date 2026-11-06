@@ -1,3 +1,5 @@
+from os import name
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -43,3 +45,49 @@ async def branch_factory(session):
         await session.flush()
         return branches
     return create_branch
+
+@pytest_asyncio.fixture
+async def receive_users(branch_factory, branches, user_factory):
+    await branch_factory(branches.all())
+    users = [User(
+        name='Alice',
+        tg_id=1001,
+        role_id=4,
+        department_id=None,
+        branch_id=branches.dragon.id,
+        is_active=True,
+    ),
+    User(
+        name='Bob',
+        tg_id=1002,
+        role_id=4,
+        department_id=None,
+        branch_id=branches.wolf.id,
+        is_active=True,
+    ),
+    User(
+        name='Carol',
+        tg_id=1003,
+        role_id=4,
+        department_id=None,
+        branch_id=branches.dragon.id,
+        is_active=False,
+    ),
+    User(
+        name='Dave',
+        tg_id=1004,
+        role_id=3,
+        department_id=None,
+        branch_id=branches.dragon.id,
+        is_active=True,
+    )]
+
+    await user_factory(users)
+
+    return {
+        'alice': users[0],
+        'bob': users[1],
+        'carol': users[2],
+        'dave': users[3],
+    }
+

@@ -82,13 +82,12 @@ class UserUseCase(UseCase):
         await self.auth.load_role()
         self.auth.check('user:receive')
         cmd = self.auth.restrict_for_branch(cmd)
-        stmt = select(User.name,
-                      Role.name,
-                      Department.name,
-                      Branch.name,
-                      User.email,
-                      User.tg_id
-                      ).join(Role).join(Department).join(Branch)
+        stmt = select(User.id.label('id'),
+                    User.name.label('name'),
+                      Role.name.label('role_name'),
+                      Department.name.label('department_name'),
+                      Branch.name.label('branch_name')
+                      ).join(Role).outerjoin(Department).outerjoin(Branch)
         if cmd.user_id:
             stmt = stmt.where(User.id == cmd.user_id)
         if cmd.tg_id:
@@ -104,7 +103,9 @@ class UserUseCase(UseCase):
         stmt = stmt.limit(cmd.limit).offset(cmd.offset).order_by(User.name)
 
         result = await self.session.execute(stmt)
-        return [UserDTO.model_validate(row.mappings()) for row in result]
+        return [
+        UserDTO.model_validate(row)
+        for row in result.mappings().all()]
 
     def _prohibit_changing_oneself(self, user_id):
         if self.actor.id == user_id:
@@ -153,4 +154,3 @@ class UserUseCase(UseCase):
         if user is None:
             raise ResourceNotFound('User not found')
         return user
-

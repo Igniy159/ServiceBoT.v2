@@ -4,7 +4,7 @@ from starlette.responses import Response
 from app.api.routers.depends import get_session, authenticate
 from fastapi import Depends, APIRouter, HTTPException
 from app.schemas.schemas_user import (CreateUser, ReceiveUser,
-                                      AddLinkTg, ChangeUser,
+                                     ChangeUser,
                                       ActivateUser, DeactivateUser, UserDTO)
 from app.models import User
 from app.usecase.usecase_user import UserUseCase
@@ -23,8 +23,8 @@ async def create_user(cmd: CreateUser,
                       use_case: UserUseCase = Depends(get_user_use_case)
                       )->UserDTO:
     new_user = await use_case.create(cmd)
-    return UserDTO(name=new_user.name,
-                   tg_id=new_user.tg_id)
+    return UserDTO(id=new_user.id,
+                    name=new_user.name)
 
 @user_rout.get(path='',
                tags=['Пользователи'],
@@ -38,15 +38,15 @@ async def receive_users(cmd: ReceiveUser,
         raise HTTPException(status_code=404,detail='Users not found')
     return users
 
-@user_rout.patch(path='/change_tg',
-                 tags=['Пользователи'],
-                 description='Добавить или изменить TG Id для пользователя',
-                 response_model=UserDTO)
-async def change_tg_id(cmd: AddLinkTg,
-                use_case: UserUseCase = Depends(get_user_use_case)
-                )->UserDTO:
-    new_user = await use_case.change_tg_id(cmd)
-    return new_user
+# @user_rout.patch(path='/change_tg',
+#                  tags=['Пользователи'],
+#                  description='Добавить или изменить TG Id для пользователя',
+#                  response_model=UserDTO)
+# async def change_tg_id(cmd: AddLinkTg,
+#                 use_case: UserUseCase = Depends(get_user_use_case)
+#                 )->UserDTO:
+#     new_user = await use_case.change_tg_id(cmd)
+#     return new_user
 
 @user_rout.patch(path='/change',
                  tags=['Пользователи'],
