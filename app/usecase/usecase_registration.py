@@ -27,6 +27,5 @@ class RegistrationUseCase:
                         role_id=role_id)
         self.session.add(new_user)
         await self.session.flush()
-        return UserDTO(name=new_user.name,
-                       email=new_user.email,
-                       tg_id=new_user.tg_id)
+        return UserDTO(id=new_user.id,
+                       name=new_user.name)

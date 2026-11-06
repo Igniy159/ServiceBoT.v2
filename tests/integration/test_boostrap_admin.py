@@ -17,8 +17,6 @@ async def test_first_admin_registry(session):
                    tg_id=987654)
     res = await use_case.boostrap_admin_registry(cmd)
     assert res.name == 'Имя админа'
-    assert res.email == 'my_email@.com'
-    assert res.tg_id == 987654
     res = await session.execute(select(User).options(joinedload(User.role)))
     user = res.scalars().one()
     assert user.password_hash != '111111'

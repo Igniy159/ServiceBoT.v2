@@ -2,18 +2,17 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 class Registry(BaseModel):
-    name: str = Field(max_length=20)
+    name: str = Field(max_length=30)
     email: str = Field(max_length=50)
     password: str = Field(max_length=50)
     tg_id: Optional[int] = Field(default=None, gt=0)
 
 class UserDTO(BaseModel):
-    name: str = Field(max_length=20)
+    id: int =Field(gt=0)
+    name: str = Field(max_length=30)
     role_name: Optional[str] = Field(default=None,max_length=20)
     department_name: Optional[str] = Field(default=None,max_length=20)
     branch_name: Optional[str] = Field(default=None,max_length=20)
-    email: Optional[str] = Field(default=None,max_length=50)
-    tg_id: Optional[int] = Field(default=None, gt=0)
 
 class LoginData(BaseModel):
     email: str = Field(max_length=50)
@@ -22,15 +21,12 @@ class LoginData(BaseModel):
 
 class CreateUser(BaseModel):
     """Command for create new user from TG entry"""
-    name: str = Field(max_length=20)
+    name: str = Field(max_length=30)
     tg_id: int = Field(gt=0)
     role_id: int = Field(gt=0)
     branch_id: int| None = Field(default=None, gt=0)
     department_id: int | None = Field(default=None, gt=0)
 
-# class AddLinkTg(BaseModel):
-#     user_id: int = Field(gt=0)
-#     tg_id: int = Field(gt=0)
 
 class ActivateUser(BaseModel):
     """Command for soft delete user"""
@@ -43,7 +39,7 @@ class DeactivateUser(BaseModel):
 class RenameUser(BaseModel):
     """Command for rename user"""
     user_id: int = Field(gt=0)
-    new_name: str = Field(max_length=20)
+    new_name: str = Field(max_length=30)
 
 class ChangeUser(BaseModel):
     """
